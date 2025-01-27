@@ -1,0 +1,2 @@
+Blackjack Game
+A simple yet fully-functional Blackjack game built with pure HTML, CSS, and JavaScript. This game allows users to play against the dealer in a web browser, featuring the core mechanics of Blackjack, such as dealing cards, calculating scores, and determining win conditions. It also supports interactive gameplay, including actions like "Hit", "Stand", and "Restart".
