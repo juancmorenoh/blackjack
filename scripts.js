@@ -138,7 +138,7 @@ let determineWinner = (playersHand, dealersHand) => {
 }
 
 
-const deck = createDeck();
+let deck = [];
 
 let playersHand = [];
 let dealersHand = [];
@@ -162,8 +162,8 @@ newGameButton.addEventListener("click", () => {
   //Empty both deal and players hands
   playersHand = [];
   dealersHand = [];
-  //Create a new deck and shuffle it
-  Shuffle(deck);
+  //Shuffle deck
+  deck = Shuffle(createDeck(deck));
   
   resultDiv.innerHTML = "";
   //Empty HTML
@@ -176,18 +176,37 @@ newGameButton.addEventListener("click", () => {
 dealButton.addEventListener("click", () => {
   
   ({ playersHand, dealersHand } = dealCards(deck));
-
+  let playerScore = calculateScore(playersHand);
+  let dealerScore = calculateScore(dealersHand);
   //Display dealer's hand
-  dealersHandDiv.innerHTML = JSON.stringify(dealersHand) + "Score: " + calculateScore(dealersHand);
+  dealersHandDiv.innerHTML = JSON.stringify(dealersHand) + "Score: " + dealerScore;
 
   //Display player's hand
-  playersHandDiv.innerHTML = JSON.stringify(playersHand) + "Score: " + calculateScore(playersHand);
+  playersHandDiv.innerHTML = JSON.stringify(playersHand) + "Score: " + playerScore;
 
-  dealButton.disabled = true;
-  newGameButton.disabled =true;
+  //If players has BJ
+  if(isBlackjack(playersHand)){
+    if (dealerScore == 10 || dealerScore == 11){
+      drawCard(dealersHand, deck);
+      dealersHandDiv.innerHTML = JSON.stringify(dealersHand) + "Score: " + dealerScore;
+      dealerScore = calculateScore(dealersHand);
+      if(dealerScore == 21){
+        resultDiv.innerHTML = "Both Dealer and Player have Blackjack! Tie!";
+      }else{
+        resultDiv.innerHTML = "No Blackjack for the Dealer! Player Wins!";
+      }
+    }else{
+      resultDiv.innerHTML = "Blackjack! Player Wins!";
+    } 
+    resetButtons();
+  }else{
+    dealButton.disabled = true;
+    newGameButton.disabled =true;
 
-  hitButton.disabled = false;
-  standButton.disabled = false;
+    hitButton.disabled = false;
+    standButton.disabled = false;
+  }
+  
   
 })
 
