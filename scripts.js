@@ -8,9 +8,10 @@
 // 8- Play again
 
 
+
 //Create deck
 //Return order list obj
-let createDeck = () =>{
+const createDeck = () =>{
   const deck = [];
   const suits = ["Hearts", "Diamonds", "Clubs", "Spades"];
   const ranks = [ "Ace","2", "3", "4", "5", "6", "7", "8", "9", "10","Jack", "Queen", "King"];
@@ -26,7 +27,7 @@ let createDeck = () =>{
 
 //Fisher-Yates Shuffle Function to Shuffle the deck
 //return deck list obj
-let Shuffle = (deck) => {
+const shuffleDeck = (deck) => {
   for (let i = deck.length - 1; i > 0; i--) {
 
     const j = Math.floor(Math.random() * (i + 1));
@@ -37,11 +38,9 @@ let Shuffle = (deck) => {
 }
 
 
-
-
 //Function to calculate value of the card
 //Return int 
-let valueCard = (card) => {
+const getCardValue = (card) => {
   let value = 0;
   if (card.rank == "Ace"){
     value  = 11;
@@ -55,11 +54,11 @@ let valueCard = (card) => {
 
 //Calculate score of a hand
 //return total score
-let calculateScore = (hand) => {
+const calculateScore = (hand) => {
   let aces = 0;
   let score = 0;
   for(card in hand){
-    score += valueCard(hand[card]);   
+    score += getCardValue(hand[card]);   
     if(hand[card].rank == "Ace"){
       aces++;
     }   
@@ -74,27 +73,28 @@ let calculateScore = (hand) => {
 
 //Function to get card from deck
 //updates deck and hand
-let drawCard = (hand, deck) => {
-  let card = deck.shift();
+const drawCard = (hand, deck) => {
+  const card = deck.shift();
   hand.push(card);
 }
 
 //Function to check if the hand is blackJack
 //return boolean
-let isBlackjack = (hand) =>{
+const isBlackjack = (hand) =>{
   return calculateScore(hand) == 21 && hand.length == 2;
 }
+
 //function to check if the hand is bust
 //return boolean
-let isBust = (hand) =>{
+const isBust = (hand) =>{
   return calculateScore(hand) > 21;
 }
 
 
 //Function to deal first 3 cards
-let dealCards = (deck) => {
-  let playersHand = [];
-  let dealersHand = [];
+const dealCards = (deck) => {
+  const playersHand = [];
+  const dealersHand = [];
   
   for (let i = 0; i < 3; i++){
     if(i % 2 == 0){
@@ -102,7 +102,6 @@ let dealCards = (deck) => {
     }else{
       dealersHand.push(deck.shift());
     }
-
   }
   return {playersHand, dealersHand};
 
@@ -110,13 +109,14 @@ let dealCards = (deck) => {
 
 //Function takes card on 16 and stay on 17
 //No return value
-let dealersPlay = (dealersHand, deck) => {
+const dealersTurn = (dealersHand, deck) => {
   while(calculateScore(dealersHand) < 17 && !isBust(dealersHand)){
     drawCard(dealersHand, deck);
   } 
 }
 
-let resetButtons = () => {
+//Reset buttons when end game
+const resetButtons = () => {
   hitButton.disabled = true;
   standButton.disabled = true;
   dealButton.disabled = true;
@@ -125,12 +125,12 @@ let resetButtons = () => {
 
 //Function to determine the winner of the game
 //return string
-let determineWinner = (playersHand, dealersHand) => {
+const determineWinner = (playersHand, dealersHand) => {
+  const playerScore = calculateScore(playersHand);
+  const dealerScore = calculateScore(dealersHand);
+
   if (isBust(playersHand)) return "Player Busts! Dealer Wins!";
   if (isBust(dealersHand)) return "Dealer Busts! Player Wins!";
-
-  let playerScore = calculateScore(playersHand);
-  let dealerScore = calculateScore(dealersHand);
   if (playerScore > dealerScore) return "Player Wins!";
   if (playerScore < dealerScore) return "Dealer Wins!";
   
@@ -138,8 +138,49 @@ let determineWinner = (playersHand, dealersHand) => {
 }
 
 
-let deck = [];
+//Balance and bets functions
 
+//Prompt user for balance amount
+//return the full balance
+const createPlayersBalance = () => {
+  while(true){
+    let balance = parseInt(prompt("Enter a starting balance "));
+    if(!isNaN(balance)){
+      console.log(`New Balance is ${balance}`);
+      return balance;
+    }
+    console.log("Invalid input");
+  }
+}
+
+//Add balance passed as par to total amount
+const addBalance = (balanceToAdd) =>{
+  return balance += balanceToAdd;
+}
+
+const removeBalance = () => {
+  return balance -= balance;
+}
+
+const placeBet = (bet) => {
+  balance -= bet;
+  return balance;
+}
+
+
+let balance = 100;
+const betButtons = document.querySelectorAll('.bet-container button');
+betButtons.forEach(button =>{
+  button.addEventListener("click", () => {
+    const bet = parseInt(button.innerHTML);
+    const betDiv = document.getElementById("show-bet");
+    betDiv.innerHTML = `Bet:  ${bet}`;
+  })
+})
+
+
+
+let deck = [];
 let playersHand = [];
 let dealersHand = [];
 
@@ -163,7 +204,7 @@ newGameButton.addEventListener("click", () => {
   playersHand = [];
   dealersHand = [];
   //Shuffle deck
-  deck = Shuffle(createDeck(deck));
+  deck = shuffleDeck(createDeck(deck));
   
   resultDiv.innerHTML = "";
   //Empty HTML
@@ -214,7 +255,7 @@ dealButton.addEventListener("click", () => {
 standButton.addEventListener("click", () => {
 
   //Dealer's turn
-  dealersPlay(dealersHand,deck);
+  dealersTurn(dealersHand,deck);
   dealersHandDiv.innerHTML = JSON.stringify(dealersHand) + "Score: " + calculateScore(dealersHand);
   let result = determineWinner(playersHand, dealersHand);
   document.getElementById("result").innerHTML = result;
@@ -234,7 +275,7 @@ hitButton.addEventListener("click", () => {
     resetButtons();
 
   }else if(playersScore == 21){
-    dealersPlay(dealersHand,deck);
+    dealersTurn(dealersHand,deck);
     dealersHandDiv.innerHTML = JSON.stringify(dealersHand) + "Score: " + playersScore;
     let result = determineWinner(playersHand, dealersHand);
     resultDiv.innerHTML = result;
