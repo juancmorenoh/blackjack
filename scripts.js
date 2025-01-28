@@ -276,7 +276,7 @@ dealButton.addEventListener("click", () => {
 
   //Hanldes double down 
   if(playerScore >= 9 && playerScore <= 11){
-    doubleDownButton = createDoubleDownButton();
+    doubleDownButton = createActionButton("double-down-button", "Double");
     doubleDownButton.addEventListener("click", () => {
       if(balance > bet){
         balance = placeBet(bet);
@@ -347,16 +347,16 @@ hitButton.addEventListener("click", () => {
 });
 
 
-//Function to create double down button in the DOM
-const createDoubleDownButton = () => {
+
+// General function to create a button in the DOM
+const createActionButton = (id, label) => {
   const button = document.createElement("button");
   const actionsContainer = document.querySelector(".actions");
-  button.setAttribute("id","double-down-button")
-  button.innerHTML = "Double";
-  actionsContainer.insertBefore(button,actionsContainer.children[1]);
-  return button;
-}
-
+  button.setAttribute("id", id);
+  button.innerHTML = label; 
+  actionsContainer.insertBefore(button, actionsContainer.children[1]);
+  return button; 
+};
 //Return total balance of players
 const payWinnings = (result) => {
   if( result === "Player Wins! (Blackjack)"){
