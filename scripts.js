@@ -73,10 +73,11 @@ const calculateScore = (hand) => {
 
 //Function to get card from deck
 //updates deck and hand
+//Return the updated hand
 const drawCard = (hand, deck) => {
   const card = deck.shift();
-  const updatedHand = hand.push(card);
-  return updatedHand
+  hand.push(card);
+  return hand
 }
 
 //Function to check if the hand is blackJack
@@ -112,9 +113,11 @@ const dealCards = (deck) => {
 //No return value
 const dealersTurn = (dealersHand, deck) => {
   while(calculateScore(dealersHand) < 17 && !isBust(dealersHand)){
-    drawCard(dealersHand, deck);
-  } 
+    dealersHand = drawCard(dealersHand, deck);
+  }
+  let dealerScore = calculateScore(dealersHand)
   displayHand(dealersHand, dealersHandDiv);
+  displayScore(dealerScore, dealerScoreDiv);
 }
 
 //Reset buttons when end game
@@ -151,10 +154,6 @@ const determineWinner = (playersHand, dealersHand) => {
 
 //Balance and bets functions
 
-//Add balance passed as par to total amount
-const addBalance = (balanceToAdd) =>{
-  return balance += balanceToAdd;
-}
 
 const placeBet = (bet) => {
   balance -= bet;
@@ -222,6 +221,7 @@ const resetGame = () =>{
   dealersHand = [];
   playerScore = 0;
   dealerScore = 0;
+  bet = 0;
 
   dealButton.disabled = false;
   betButtons.forEach( button =>{
@@ -251,7 +251,7 @@ dealButton.addEventListener("click", () => {
     messageDiv.innerHTML = "Not enough balance to place bet!";
     return;
   }
-  
+  messageDiv.innerHTML = "";
   //remove bet from total balance
   betDiv.innerHTML = `Bet: ${bet}`;
   balance = placeBet(bet);
@@ -308,7 +308,7 @@ dealButton.addEventListener("click", () => {
         displayScore(playerScore, playerScoreDiv);
 
         dealersTurn(dealersHand,deck);
-        endTurn(playersHand,dealersHand,deck);
+        endTurn(playersHand,dealersHand);
       }else{
         messageDiv.innerHTML = "Not enough balance to double down!Just take a card brokie";
       }
@@ -321,7 +321,7 @@ dealButton.addEventListener("click", () => {
 standButton.addEventListener("click", () => {
   //Dealer's turn
   dealersTurn(dealersHand,deck);
-  endTurn(playersHand,dealersHand,deck);
+  endTurn(playersHand,dealersHand);
 });
 
 
@@ -336,9 +336,9 @@ hitButton.addEventListener("click", () => {
     resultDiv.innerHTML = "Player Busts! Dealer Wins!";
     resetButtons();
 
-  }else if(playersScore == 21){
+  }else if(playerScore == 21){
     dealersTurn(dealersHand,deck);
-    endTurn(playersHand,dealersHand,deck);
+    endTurn(playersHand,dealersHand);
   }
   
 });
@@ -367,7 +367,7 @@ const payWinnings = (result) => {
 }
 
 //Logic to handle the end of the game
-const endTurn = (playersHand,dealersHand,deck) => {
+const endTurn = (playersHand,dealersHand) => {
 
   let result = determineWinner(playersHand,dealersHand);
   resultDiv.innerHTML = result;
