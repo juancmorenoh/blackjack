@@ -8,7 +8,7 @@
 // 8- Play again
 
 
-
+//FUNCTIONS
 //Create deck
 //Return order list obj
 const createDeck = () =>{
@@ -133,30 +133,30 @@ const resetButtons = () => {
   disableBetButtons(true);
 }
 
+
 //Function to determine the winner of the game
 //return string
 const determineWinner = (playersHand, dealersHand) => {
   const playerScore = calculateScore(playersHand);
   const dealerScore = calculateScore(dealersHand);
   //BlackJack cases
-  if (isBlackjack(playersHand) && isBlackjack(dealersHand)) return "Both Dealer and Player have Blackjack! Tie!";
-  if (isBlackjack(playersHand)) return "Player Wins! (Blackjack)";
-  
-  if (isBlackjack(dealersHand)) return "Dealer Wins! (Blackjack)";
+  if (isBlackjack(playersHand) && dealerScore === 11) return GAME_RESULTS.PAY_BLACKJACK_1_TO_1;
+  if (isBlackjack(playersHand) && isBlackjack(dealersHand)) return GAME_RESULTS.BOTH_BLACKJACK;
+  if (isBlackjack(playersHand)) return GAME_RESULTS.PLAYER_BLACKJACK;
+  if (isBlackjack(dealersHand)) return GAME_RESULTS.DEALER_BLACKJACK;
   
   //Regular cases
-  if (isBust(playersHand)) return "Player Busts! Dealer Wins!";
-  if (isBust(dealersHand)) return "Dealer Busts! Player Wins!";
-  if (playerScore > dealerScore) return "Player Wins!";
-  if (playerScore < dealerScore) return "Dealer Wins!";
+  if (isBust(playersHand)) return GAME_RESULTS.PLAYER_BUST;
+  if (isBust(dealersHand)) return GAME_RESULTS.DEALER_BUST;
+  if (playerScore > dealerScore) return GAME_RESULTS.PLAYER_WINS;
+  if (playerScore < dealerScore) return GAME_RESULTS.DEALER_WINS;
   
-  return "It's a Tie!";
+  return GAME_RESULTS.TIE;
 }
 
 
+
 //Balance and bets functions
-
-
 const placeBet = (bet) => {
   balance -= bet;
   return balance;
@@ -167,8 +167,6 @@ const calculatePayout = (bet, odds) => {
   return bet * odds;
 }
 
-let balance = 100;
-let bet = 0;
 
 //PLACE THE BET
 const betButtons = document.querySelectorAll('.bet-container button');
@@ -179,37 +177,6 @@ betButtons.forEach(button =>{
   })
 })
 
-let betDiv = document.getElementById("show-bet");
-let balanceDiv = document.getElementById("balance-display")
-balanceDiv.innerHTML = `${balance}`;
-
-
-
-
-let deck = [];
-let playersHand = [];
-let dealersHand = [];
-let playerScore = 0;  
-let dealerScore = 0;
-let isInsurance = false;
-let dealersHandDiv = document.getElementById("dealer-cards");
-let playersHandDiv = document.getElementById("player-cards");
-let messageDiv = document.getElementById("message");
-let resultDiv = document.getElementById("result");
-let insuranceDiv = document.getElementById("insurance");
-let playerScoreDiv = document.getElementById("player-score");
-let dealerScoreDiv = document.getElementById("dealer-score");
-    
-let newGameButton = document.getElementById("new-game-button");
-let dealButton = document.getElementById("deal-button");
-let hitButton = document.getElementById("hit-button");
-let standButton = document.getElementById("stand-button");
-
-let doubleDownButton = null;
-let insuranceButton = null;
-
-resetButtons();
-//Disable buttons at start
 
 //Empty HTML and reset buttons
 const resetGame = () =>{
@@ -230,7 +197,120 @@ const resetGame = () =>{
   disableBetButtons(false);
   
 }
+// General function to create a button in the DOM
+const createActionButton = (id, label) => {
+  const button = document.createElement("button");
+  const actionsContainer = document.querySelector(".actions");
+  button.setAttribute("id", id);
+  button.innerHTML = label; 
+  actionsContainer.insertBefore(button, actionsContainer.children[1]);
+  return button; 
+};
 
+//Return total balance of players
+const payWinnings = (result) => {
+  if( result === "Player Wins! (Blackjack)"){
+    balance += calculatePayout(bet, 2.5);
+  }else if (result === "Player Wins!" || result === "Dealer Busts! Player Wins!") {
+    balance += calculatePayout(bet, 2);
+  } else if(result === "It's a Tie!" || result === "Both Dealer and Player have Blackjack! Tie!"){
+    balance += calculatePayout(bet, 1);
+
+
+    //ADDED
+  }else if(result === "Pay BlackJack 1 to 1"){
+    balance += calculatePayout(bet, 2);
+  }
+  return balance
+}
+
+
+//Logic to handle the end of the game
+const endTurn = (playersHand,dealersHand) => {
+
+  let result = determineWinner(playersHand,dealersHand);
+  resultDiv.innerHTML = result;
+
+  resetButtons();
+
+  balance = payWinnings(result);
+  balanceDiv.innerHTML = `${balance}`;
+}
+
+//CURRENTLY DISPLAYING AN OBJECT
+//NEED FIXING TO SHOW MORE READABLE DATA
+const displayHand = (hand,div) => {
+  div.innerHTML = JSON.stringify(hand);
+}
+
+//Display the score in the given div
+const displayScore = (score,div) => {
+  div.innerHTML = "Score : " + JSON.stringify(score);
+}
+
+//COSTANTS RESULTS
+const GAME_RESULTS = {
+  PLAYER_BLACKJACK: "PLAYER_BLACKJACK",
+  DEALER_BLACKJACK: "DEALER_BLACKJACK",
+  BOTH_BLACKJACK: "BOTH_BLACKJACK",
+  PLAYER_BUST: "PLAYER_BUST",
+  DEALER_BUST: "DEALER_BUST",
+  PLAYER_WINS: "PLAYER_WINS",
+  DEALER_WINS: "DEALER_WINS",
+  TIE: "TIE",
+  PAY_BLACKJACK_1_TO_1: "PAY_BLACKJACK_1_TO_1",
+};
+
+//CONST PAYOUTS
+const PAYOUT_MULTIPLIERS = {
+  [GAME_RESULTS.PLAYER_BLACKJACK]: 2.5,
+  [GAME_RESULTS.PLAYER_WINS]: 2,
+  [GAME_RESULTS.DEALER_BUST]: 2,
+  [GAME_RESULTS.TIE]: 1,
+  [GAME_RESULTS.BOTH_BLACKJACK]: 1,
+  [GAME_RESULTS.PAY_BLACKJACK_1_TO_1]: 2,
+};
+
+//GAME VARIABLES AND FLOW
+let deck = [];
+let playersHand = [];
+let dealersHand = [];
+let balance = 100;
+let bet = 0;
+let playerScore = 0;  
+let dealerScore = 0;
+let isInsurance = false;
+let dealersHandDiv = document.getElementById("dealer-cards");
+let playersHandDiv = document.getElementById("player-cards");
+let messageDiv = document.getElementById("message");
+let resultDiv = document.getElementById("result");
+let insuranceDiv = document.getElementById("insurance");
+let playerScoreDiv = document.getElementById("player-score");
+let dealerScoreDiv = document.getElementById("dealer-score");
+  
+let betDiv = document.getElementById("show-bet");
+let balanceDiv = document.getElementById("balance-display");
+
+let newGameButton = document.getElementById("new-game-button");
+let dealButton = document.getElementById("deal-button");
+let hitButton = document.getElementById("hit-button");
+let standButton = document.getElementById("stand-button");
+
+let doubleDownButton = null;
+let insuranceButton = null;
+let OnetoOneBlackjackButton = null;
+
+balanceDiv.innerHTML = `${balance}`;
+resetButtons();
+if(doubleDownButton){
+  doubleDownButton.remove();
+}
+if(insuranceButton){
+  insuranceButton.remove();
+}
+
+
+//EVENTLISTENERS
 //NEW GAME
 newGameButton.addEventListener("click", () => {
   //Empty both deal and players hands
@@ -293,7 +373,9 @@ dealButton.addEventListener("click", () => {
   //HANDLES BLACKJACK SCENARIO
 
   //add logic in case dealers shows BJ (get paid 1 to 1)
+  //PLAYER HAS BLACKJACK
   if(isBlackjack(playersHand)){
+    
     if (dealerScore == 10 || dealerScore == 11){
       dealersHand = drawCard(dealersHand, deck);
       dealerScore = calculateScore(dealersHand);
@@ -367,57 +449,6 @@ hitButton.addEventListener("click", () => {
   }
   
 });
-if(doubleDownButton){
-  doubleDownButton.remove();
-}
-if(insuranceButton){
-  insuranceButton.remove();
-}
-// General function to create a button in the DOM
-const createActionButton = (id, label) => {
-  const button = document.createElement("button");
-  const actionsContainer = document.querySelector(".actions");
-  button.setAttribute("id", id);
-  button.innerHTML = label; 
-  actionsContainer.insertBefore(button, actionsContainer.children[1]);
-  return button; 
-};
 
-//Return total balance of players
-const payWinnings = (result) => {
-  if( result === "Player Wins! (Blackjack)"){
-    balance += calculatePayout(bet, 2.5);
-  }else if (result === "Player Wins!" || result === "Dealer Busts! Player Wins!") {
-    balance += calculatePayout(bet, 2);
-  } else if(result === "It's a Tie!" || result === "Both Dealer and Player have Blackjack! Tie!"){
-    balance += calculatePayout(bet, 1);
-  }else if(result === "Dealer Wins! (Blackjack)" && isInsurance){
-    balance += calculatePayout(bet, 1);
-  }
-  return balance
-}
-
-//Logic to handle the end of the game
-const endTurn = (playersHand,dealersHand) => {
-
-  let result = determineWinner(playersHand,dealersHand);
-  resultDiv.innerHTML = result;
-
-  resetButtons();
-
-  balance = payWinnings(result);
-  balanceDiv.innerHTML = `${balance}`;
-}
-
-//CURRENTLY DISPLAYING AN OBJECT
-//NEED FIXING TO SHOW MORE READABLE DATA
-const displayHand = (hand,div) => {
-  div.innerHTML = JSON.stringify(hand);
-}
-
-//Display the score in the given div
-const displayScore = (score,div) => {
-  div.innerHTML = "Score : " + JSON.stringify(score);
-}
 
 
