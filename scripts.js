@@ -223,12 +223,13 @@ const endTurn = (playersHand,dealersHand, bet, balance) => {
 //CURRENTLY DISPLAYING AN OBJECT
 //NEED FIXING TO SHOW MORE READABLE DATA
 const displayHand = (hand,div) => {
-  div.innerHTML = JSON.stringify(hand);
+  const handString = hand.map(card => `${card.rank} of ${card.suit}`).join(' | ');
+  div.innerHTML = handString;
 }
 
 //Display the score in the given div
 const displayScore = (score,div) => {
-  div.innerHTML = "Score : " + JSON.stringify(score);
+  div.innerHTML = "Score : " + score;
 }
 
 //COSTANTS RESULTS
