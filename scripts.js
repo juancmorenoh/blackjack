@@ -108,7 +108,11 @@ const dealCards = (deck) => {
   return {playersHand, dealersHand};
 
 }
-
+const disableBetButtons = (boolean) => {
+  betButtons.forEach( button =>{
+    button.disabled = boolean;
+  })
+}
 //Function takes card on 16 and stay on 17
 //No return value
 const dealersTurn = (dealersHand, deck) => {
@@ -126,9 +130,7 @@ const resetButtons = () => {
   standButton.disabled = true;
   dealButton.disabled = true;
   newGameButton.disabled = false;
-  betButtons.forEach( button =>{
-    button.disabled = true;
-  })
+  disableBetButtons(true);
 }
 
 //Function to determine the winner of the game
@@ -189,11 +191,12 @@ let playersHand = [];
 let dealersHand = [];
 let playerScore = 0;  
 let dealerScore = 0;
-
+let isInsurance = false;
 let dealersHandDiv = document.getElementById("dealer-cards");
 let playersHandDiv = document.getElementById("player-cards");
 let messageDiv = document.getElementById("message");
 let resultDiv = document.getElementById("result");
+let insuranceDiv = document.getElementById("insurance");
 let playerScoreDiv = document.getElementById("player-score");
 let dealerScoreDiv = document.getElementById("dealer-score");
     
@@ -203,6 +206,7 @@ let hitButton = document.getElementById("hit-button");
 let standButton = document.getElementById("stand-button");
 
 let doubleDownButton = null;
+let insuranceButton = null;
 
 resetButtons();
 //Disable buttons at start
@@ -213,7 +217,7 @@ const resetGame = () =>{
   playersHandDiv.innerHTML = "";
   dealersHandDiv.innerHTML = ""; 
   messageDiv.innerHTML = "";
-  betDiv.innerHTML = "";
+  
   playerScoreDiv.innerHTML = "";
   dealerScoreDiv.innerHTML = "";
 
@@ -221,12 +225,9 @@ const resetGame = () =>{
   dealersHand = [];
   playerScore = 0;
   dealerScore = 0;
-  bet = 0;
 
   dealButton.disabled = false;
-  betButtons.forEach( button =>{
-    button.disabled = false;
-  })
+  disableBetButtons(false);
   
 }
 
@@ -251,6 +252,7 @@ dealButton.addEventListener("click", () => {
     messageDiv.innerHTML = "Not enough balance to place bet!";
     return;
   }
+  disableBetButtons(true);
   messageDiv.innerHTML = "";
   //remove bet from total balance
   betDiv.innerHTML = `Bet: ${bet}`;
@@ -268,8 +270,29 @@ dealButton.addEventListener("click", () => {
   displayHand(playersHand, playersHandDiv);
   displayScore(playerScore, playerScoreDiv);
 
+
+  //IMPROVE THE LOGIC OF INSURANCE + BLACKJACKS BOTH PLAYER AND DEALER
   
+
+  //
+
+  //HANDLES INSURANCE WHEN DEALER SHOWING ACE
+  if(dealerScore == 11){
+    insuranceButton = createActionButton("insurance-button", "Insurance");
+    insuranceButton.addEventListener("click", () =>{
+      //insurance cost is half the original bet
+      let insurance = bet * 0.5;
+      if(balance >= insurance){
+        balance = placeBet(insurance);
+        messageDiv.innerHTML = "Player places insurance!";
+        insuranceDiv.innerHTML = `Insurance: ${insurance}`;
+        isInsurance = true;
+      }
+    })
+  }
   //HANDLES BLACKJACK SCENARIO
+
+  //add logic in case dealers shows BJ (get paid 1 to 1)
   if(isBlackjack(playersHand)){
     if (dealerScore == 10 || dealerScore == 11){
       dealersHand = drawCard(dealersHand, deck);
@@ -312,6 +335,7 @@ dealButton.addEventListener("click", () => {
       }else{
         messageDiv.innerHTML = "Not enough balance to double down!Just take a card brokie";
       }
+    
       doubleDownButton.remove();
     });
   }
@@ -328,6 +352,7 @@ standButton.addEventListener("click", () => {
 //HIT
 hitButton.addEventListener("click", () => {
   playersHand = drawCard(playersHand, deck);
+  
   playerScore = calculateScore(playersHand);
   displayHand(playersHand, playersHandDiv);
   displayScore(playerScore, playerScoreDiv);
@@ -342,7 +367,12 @@ hitButton.addEventListener("click", () => {
   }
   
 });
-
+if(doubleDownButton){
+  doubleDownButton.remove();
+}
+if(insuranceButton){
+  insuranceButton.remove();
+}
 // General function to create a button in the DOM
 const createActionButton = (id, label) => {
   const button = document.createElement("button");
@@ -357,10 +387,11 @@ const createActionButton = (id, label) => {
 const payWinnings = (result) => {
   if( result === "Player Wins! (Blackjack)"){
     balance += calculatePayout(bet, 2.5);
-  }
-  if (result === "Player Wins!" || result === "Dealer Busts! Player Wins!") {
+  }else if (result === "Player Wins!" || result === "Dealer Busts! Player Wins!") {
     balance += calculatePayout(bet, 2);
   } else if(result === "It's a Tie!" || result === "Both Dealer and Player have Blackjack! Tie!"){
+    balance += calculatePayout(bet, 1);
+  }else if(result === "Dealer Wins! (Blackjack)" && isInsurance){
     balance += calculatePayout(bet, 1);
   }
   return balance
@@ -388,3 +419,5 @@ const displayHand = (hand,div) => {
 const displayScore = (score,div) => {
   div.innerHTML = "Score : " + JSON.stringify(score);
 }
+
+
