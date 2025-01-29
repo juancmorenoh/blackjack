@@ -75,7 +75,8 @@ const calculateScore = (hand) => {
 //updates deck and hand
 const drawCard = (hand, deck) => {
   const card = deck.shift();
-  hand.push(card);
+  const updatedHand = hand.push(card);
+  return updatedHand
 }
 
 //Function to check if the hand is blackJack
@@ -113,6 +114,7 @@ const dealersTurn = (dealersHand, deck) => {
   while(calculateScore(dealersHand) < 17 && !isBust(dealersHand)){
     drawCard(dealersHand, deck);
   } 
+  displayHand(dealersHand, dealersHandDiv);
 }
 
 //Reset buttons when end game
@@ -186,11 +188,15 @@ balanceDiv.innerHTML = `${balance}`;
 let deck = [];
 let playersHand = [];
 let dealersHand = [];
+let playerScore = 0;  
+let dealerScore = 0;
 
 let dealersHandDiv = document.getElementById("dealer-cards");
 let playersHandDiv = document.getElementById("player-cards");
 let messageDiv = document.getElementById("message");
 let resultDiv = document.getElementById("result");
+let playerScoreDiv = document.getElementById("player-score");
+let dealerScoreDiv = document.getElementById("dealer-score");
     
 let newGameButton = document.getElementById("new-game-button");
 let dealButton = document.getElementById("deal-button");
@@ -207,7 +213,16 @@ const resetGame = () =>{
   resultDiv.innerHTML = "";
   playersHandDiv.innerHTML = "";
   dealersHandDiv.innerHTML = ""; 
-  
+  messageDiv.innerHTML = "";
+  betDiv.innerHTML = "";
+  playerScoreDiv.innerHTML = "";
+  dealerScoreDiv.innerHTML = "";
+
+  playersHand = [];
+  dealersHand = [];
+  playerScore = 0;
+  dealerScore = 0;
+
   dealButton.disabled = false;
   betButtons.forEach( button =>{
     button.disabled = false;
@@ -218,9 +233,6 @@ const resetGame = () =>{
 //NEW GAME
 newGameButton.addEventListener("click", () => {
   //Empty both deal and players hands
-  playersHand = [];
-  dealersHand = [];
-  
   //Create and Shuffle deck
   deck = shuffleDeck(createDeck(deck));
   
@@ -239,32 +251,37 @@ dealButton.addEventListener("click", () => {
     messageDiv.innerHTML = "Not enough balance to place bet!";
     return;
   }
-  messageDiv.innerHTML = "";
-
+  
   //remove bet from total balance
+  betDiv.innerHTML = `Bet: ${bet}`;
   balance = placeBet(bet);
-  balanceDiv.innerHTML = `${balance}`;
-
+  
   ({ playersHand, dealersHand } = dealCards(deck));
-  let playerScore = calculateScore(playersHand);
-  let dealerScore = calculateScore(dealersHand);
-  //Display dealer's hand
-  dealersHandDiv.innerHTML = JSON.stringify(dealersHand) + "Score: " + dealerScore;
+  //TOO MUCH REPEATED CODE WHEN DRAWCARD AND DISPLAYING HAND/SCORE
 
+  //Display dealer's hand
+  dealerScore = calculateScore(dealersHand);
+  displayHand(dealersHand, dealersHandDiv);
+  displayScore(dealerScore, dealerScoreDiv);
   //Display player's hand
-  playersHandDiv.innerHTML = JSON.stringify(playersHand) + "Score: " + playerScore;
+  playerScore = calculateScore(playersHand);
+  displayHand(playersHand, playersHandDiv);
+  displayScore(playerScore, playerScoreDiv);
 
   
   //HANDLES BLACKJACK SCENARIO
   if(isBlackjack(playersHand)){
     if (dealerScore == 10 || dealerScore == 11){
-      drawCard(dealersHand, deck);
-      dealersHandDiv.innerHTML = JSON.stringify(dealersHand) + "Score: " + dealerScore; 
+      dealersHand = drawCard(dealersHand, deck);
+      dealerScore = calculateScore(dealersHand);
+      displayHand(dealersHand, dealersHandDiv); 
+      displayScore(dealerScore, dealerScoreDiv);
     }
     result = determineWinner(playersHand, dealersHand);  
     balance = payWinnings(result);
     resultDiv.innerHTML = result;
     resetButtons();
+  //REGULAR GAMEPLAY SCENARIO
   }else{
     dealButton.disabled = true;
     newGameButton.disabled =true;
@@ -278,24 +295,20 @@ dealButton.addEventListener("click", () => {
   if(playerScore >= 9 && playerScore <= 11){
     doubleDownButton = createActionButton("double-down-button", "Double");
     doubleDownButton.addEventListener("click", () => {
-      if(balance > bet){
+      if(balance >= bet){
         balance = placeBet(bet);
         balanceDiv.innerHTML = `${balance}`;
         bet += bet;
         betDiv.innerHTML = `Bet:  ${bet}`;
         messageDiv.innerHTML = "Player doubles down! One card only."
-        drawCard(playersHand, deck);
-        playersHandDiv.innerHTML = JSON.stringify(playersHand) + "Score: " + calculateScore(playersHand);
+        
+        playersHand = drawCard(playersHand, deck);
+        playerScore = calculateScore(playersHand);
+        displayHand(playersHand, playersHandDiv);
+        displayScore(playerScore, playerScoreDiv);
 
-        //FROM HERE IS REAPITING
         dealersTurn(dealersHand,deck);
-        dealersHandDiv.innerHTML = JSON.stringify(dealersHand) + "Score: " + calculateScore(dealersHand);
-        let result = determineWinner(playersHand, dealersHand);
-        document.getElementById("result").innerHTML = result;
-    
-        balance = payWinnings(result);
-        resetButtons();
-        balanceDiv.innerHTML = `${balance}`;
+        endTurn(playersHand,dealersHand,deck);
       }else{
         messageDiv.innerHTML = "Not enough balance to double down!Just take a card brokie";
       }
@@ -306,47 +319,29 @@ dealButton.addEventListener("click", () => {
 
 //STAND
 standButton.addEventListener("click", () => {
-
   //Dealer's turn
   dealersTurn(dealersHand,deck);
-  dealersHandDiv.innerHTML = JSON.stringify(dealersHand) + "Score: " + calculateScore(dealersHand);
-  let result = determineWinner(playersHand, dealersHand);
-  resultDiv.innerHTML = result;
-
-  
-  balance = payWinnings(result);
-  resetButtons();
-  balanceDiv.innerHTML = `${balance}`;
+  endTurn(playersHand,dealersHand,deck);
 });
 
 
 //HIT
 hitButton.addEventListener("click", () => {
-  drawCard(playersHand, deck);
-  let playersScore = calculateScore(playersHand);
+  playersHand = drawCard(playersHand, deck);
+  playerScore = calculateScore(playersHand);
+  displayHand(playersHand, playersHandDiv);
+  displayScore(playerScore, playerScoreDiv);
 
-  playersHandDiv.innerHTML = JSON.stringify(playersHand) + "Score: " + playersScore;
-
-  //FROM HERE IS REPEATED
   if(isBust(playersHand)){
     resultDiv.innerHTML = "Player Busts! Dealer Wins!";
     resetButtons();
 
   }else if(playersScore == 21){
     dealersTurn(dealersHand,deck);
-    dealersHandDiv.innerHTML = JSON.stringify(dealersHand) + "Score: " + playersScore;
-    let result = determineWinner(playersHand, dealersHand);
-    
-    resultDiv.innerHTML = result;
-    balance = payWinnings(result);
-    
-    resetButtons();
+    endTurn(playersHand,dealersHand,deck);
   }
   
-  balanceDiv.innerHTML = `${balance}`;
 });
-
-
 
 // General function to create a button in the DOM
 const createActionButton = (id, label) => {
@@ -357,6 +352,7 @@ const createActionButton = (id, label) => {
   actionsContainer.insertBefore(button, actionsContainer.children[1]);
   return button; 
 };
+
 //Return total balance of players
 const payWinnings = (result) => {
   if( result === "Player Wins! (Blackjack)"){
@@ -368,4 +364,27 @@ const payWinnings = (result) => {
     balance += calculatePayout(bet, 1);
   }
   return balance
+}
+
+//Logic to handle the end of the game
+const endTurn = (playersHand,dealersHand,deck) => {
+
+  let result = determineWinner(playersHand,dealersHand);
+  resultDiv.innerHTML = result;
+
+  resetButtons();
+
+  balance = payWinnings(result);
+  balanceDiv.innerHTML = `${balance}`;
+}
+
+//CURRENTLY DISPLAYING AN OBJECT
+//NEED FIXING TO SHOW MORE READABLE DATA
+const displayHand = (hand,div) => {
+  div.innerHTML = JSON.stringify(hand);
+}
+
+//Display the score in the given div
+const displayScore = (score,div) => {
+  div.innerHTML = "Score : " + JSON.stringify(score);
 }
