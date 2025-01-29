@@ -45,13 +45,13 @@ const getCardValue = (card) => {
   if (card.rank == "Ace") value  = 11;
   else if (card.rank == "Jack" || card.rank == "Queen" || card.rank == "King") value = 10;
   else value = parseInt(card.rank);
-  
+
   return value;
 }
 
 //Calculate score of a hand
 //return total score
-const calculateScore = (hand) => {
+const getHandScore = (hand) => {
   let aces = 0;
   let score = 0;
   for(card in hand){
@@ -67,35 +67,36 @@ const calculateScore = (hand) => {
   return score;
 }
 
-
 //Function to get card from deck
-//updates deck and hand
-//Return the updated hand
+//modifies Deck object and hand
+//Return the card
 const drawCard = (hand, deck) => {
   const card = deck.shift();
   hand.push(card);
-  return hand
+  return card;
 }
 
 //Function to check if the hand is blackJack
 //return boolean
 const isBlackjack = (hand) =>{
-  return calculateScore(hand) == 21 && hand.length == 2;
+  return getHandScore(hand) == 21 && hand.length == 2;
 }
 
 //function to check if the hand is bust
 //return boolean
 const isBust = (hand) =>{
-  return calculateScore(hand) > 21;
+  return getHandScore(hand) > 21;
 }
 
 
-//Function to deal first 3 cards
-const dealCards = (deck) => {
+//Function to deal first n of cards
+//modifies Deck object
+//return Object rapresenting player and dealer hands
+const dealCards = (deck, nCards) => {
   const playersHand = [];
   const dealersHand = [];
   
-  for (let i = 0; i < 3; i++){
+  for (let i = 0; i < nCards; i++){
     if(i % 2 == 0){
       playersHand.push(deck.shift());
     }else{
@@ -105,23 +106,46 @@ const dealCards = (deck) => {
   return {playersHand, dealersHand};
 
 }
+
+//Function to activate or deactivate Bet Buttons
 const disableBetButtons = (boolean) => {
   betButtons.forEach( button =>{
     button.disabled = boolean;
   })
 }
+
 //Function takes card on 16 and stay on 17
-//No return value
+//modifies Deck object
+//modifies dealersHand object
+//Return dealerScore
 const dealersTurn = (dealersHand, deck) => {
-  while(calculateScore(dealersHand) < 17 && !isBust(dealersHand)){
-    dealersHand = drawCard(dealersHand, deck);
+  dealerScore = getHandScore(dealersHand);
+  while(getHandScore(dealersHand) < 17 && !isBust(dealersHand)){
+    card = drawCard(dealersHand, deck);
+    dealerScore += getCardValue(card);
   }
-  let dealerScore = calculateScore(dealersHand)
   displayHand(dealersHand, dealersHandDiv);
   displayScore(dealerScore, dealerScoreDiv);
+  return dealerScore;
 }
 
-//Reset buttons when end game
+//Balance and bets functions
+
+//Function to Bet
+//Modifies global balance
+//return the bet placed
+const placeBet = (bet,balance) => {
+  balance -= bet;
+  return bet;
+}
+
+//Function calculates payout
+//Bet + winnings
+const getTotalPayout = (bet, multiplier) => {
+  return bet * multiplier;
+}
+
+//Reset buttons TO only allow NEWGAME button
 const resetButtons = () => {
   hitButton.disabled = true;
   standButton.disabled = true;
@@ -130,12 +154,39 @@ const resetButtons = () => {
   disableBetButtons(true);
 }
 
+//Empty HTML and reset buttons
+const resetGame = () =>{
+  playersHandDiv.innerHTML = "";
+  dealersHandDiv.innerHTML = ""; 
+  playerScoreDiv.innerHTML = "";
+  dealerScoreDiv.innerHTML = "";
+  messageDiv.innerHTML = "";
+  resultDiv.innerHTML = "";
+  
+  playersHand = [];
+  dealersHand = [];
+  playerScore = 0;
+  dealerScore = 0;
+
+  dealButton.disabled = false;
+  disableBetButtons(false);
+}
+
+// General function to create a button in the DOM
+const createActionButton = (id, label) => {
+  const button = document.createElement("button");
+  const actionsContainer = document.querySelector(".actions");
+  button.setAttribute("id", id);
+  button.innerHTML = label; 
+  actionsContainer.insertBefore(button, actionsContainer.children[1]);
+  return button; 
+};
 
 //Function to determine the winner of the game
 //return string
-const determineWinner = (playersHand, dealersHand) => {
-  const playerScore = calculateScore(playersHand);
-  const dealerScore = calculateScore(dealersHand);
+const determineWinner = (playersHand, dealersHand,) => {
+  const playerScore = getHandScore(playersHand);
+  const dealerScore = getHandScore(dealersHand);
   //BlackJack cases
   if (isBlackjack(playersHand) && dealerScore === 11) return GAME_RESULTS.PAY_BLACKJACK_1_TO_1;
   if (isBlackjack(playersHand) && isBlackjack(dealersHand)) return GAME_RESULTS.BOTH_BLACKJACK;
@@ -151,76 +202,22 @@ const determineWinner = (playersHand, dealersHand) => {
   return GAME_RESULTS.TIE;
 }
 
-
-
-//Balance and bets functions
-const placeBet = (bet) => {
-  balance -= bet;
-  return balance;
-}
-
-//Return amount won (bet + winnings)
-const calculatePayout = (bet, odds) => {
-  return bet * odds;
-}
-
-
-//PLACE THE BET
-const betButtons = document.querySelectorAll('.bet-container button');
-betButtons.forEach(button =>{
-  button.addEventListener("click", () => {
-    bet = parseInt(button.innerHTML);
-    betDiv.innerHTML = `Bet:  ${bet}`;
-  })
-})
-
-
-//Empty HTML and reset buttons
-const resetGame = () =>{
-  resultDiv.innerHTML = "";
-  playersHandDiv.innerHTML = "";
-  dealersHandDiv.innerHTML = ""; 
-  messageDiv.innerHTML = "";
-  
-  playerScoreDiv.innerHTML = "";
-  dealerScoreDiv.innerHTML = "";
-
-  playersHand = [];
-  dealersHand = [];
-  playerScore = 0;
-  dealerScore = 0;
-
-  dealButton.disabled = false;
-  disableBetButtons(false);
-  
-}
-// General function to create a button in the DOM
-const createActionButton = (id, label) => {
-  const button = document.createElement("button");
-  const actionsContainer = document.querySelector(".actions");
-  button.setAttribute("id", id);
-  button.innerHTML = label; 
-  actionsContainer.insertBefore(button, actionsContainer.children[1]);
-  return button; 
-};
-
-//Return total balance of players
+//Function to pay the winning based on bet and outcome
+//modifies the global balance
+//returns the balance updated
 const payWinnings = (result, bet, balance) => {
   const multiplier = PAYOUT_MULTIPLIERS[result] || 0;
   const payout = calculatePayout(bet,multiplier);
-  return balance + payout;
+  return balance += payout;
 }
 
 //Logic to handle the end of the game
-const endTurn = (playersHand,dealersHand) => {
-
-  let result = determineWinner(playersHand,dealersHand);
+const endTurn = (playersHand,dealersHand, bet, balance) => {
+  const result = determineWinner(playersHand,dealersHand);
   resultDiv.innerHTML = result;
-
-  resetButtons();
-
-  balance = payWinnings(result);
+  balance = payWinnings(result,bet,balance);
   balanceDiv.innerHTML = `${balance}`;
+  resetButtons();
 }
 
 //CURRENTLY DISPLAYING AN OBJECT
@@ -282,6 +279,8 @@ let dealButton = document.getElementById("deal-button");
 let hitButton = document.getElementById("hit-button");
 let standButton = document.getElementById("stand-button");
 
+let betButtons = document.querySelectorAll('.bet-container button');
+
 let doubleDownButton = null;
 let insuranceButton = null;
 let OnetoOneBlackjackButton = null;
@@ -297,6 +296,7 @@ if(insuranceButton){
 
 
 //EVENTLISTENERS
+
 //NEW GAME
 newGameButton.addEventListener("click", () => {
   //Empty both deal and players hands
@@ -305,6 +305,14 @@ newGameButton.addEventListener("click", () => {
   
   //Empty HTML and reset buttons
   resetGame();
+})
+
+//PLACE THE BET
+betButtons.forEach(button =>{
+  button.addEventListener("click", () => {
+    bet = parseInt(button.innerHTML);
+    betDiv.innerHTML = `Bet:  ${bet}`;
+  })
 })
 
 //DEAL CARDS
