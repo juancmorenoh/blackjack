@@ -42,13 +42,10 @@ const shuffleDeck = (deck) => {
 //Return int 
 const getCardValue = (card) => {
   let value = 0;
-  if (card.rank == "Ace"){
-    value  = 11;
-  }else if (card.rank == "Jack" || card.rank == "Queen" || card.rank == "King"){
-    value = 10;
-  }else{
-    value = parseInt(card.rank);
-  }
+  if (card.rank == "Ace") value  = 11;
+  else if (card.rank == "Jack" || card.rank == "Queen" || card.rank == "King") value = 10;
+  else value = parseInt(card.rank);
+  
   return value;
 }
 
@@ -208,22 +205,11 @@ const createActionButton = (id, label) => {
 };
 
 //Return total balance of players
-const payWinnings = (result) => {
-  if( result === "Player Wins! (Blackjack)"){
-    balance += calculatePayout(bet, 2.5);
-  }else if (result === "Player Wins!" || result === "Dealer Busts! Player Wins!") {
-    balance += calculatePayout(bet, 2);
-  } else if(result === "It's a Tie!" || result === "Both Dealer and Player have Blackjack! Tie!"){
-    balance += calculatePayout(bet, 1);
-
-
-    //ADDED
-  }else if(result === "Pay BlackJack 1 to 1"){
-    balance += calculatePayout(bet, 2);
-  }
-  return balance
+const payWinnings = (result, bet, balance) => {
+  const multiplier = PAYOUT_MULTIPLIERS[result] || 0;
+  const payout = calculatePayout(bet,multiplier);
+  return balance + payout;
 }
-
 
 //Logic to handle the end of the game
 const endTurn = (playersHand,dealersHand) => {
