@@ -65,6 +65,7 @@ const getHandScore = (hand) => {
 const drawCard = (hand, deck) => {
   const card = deck.shift();
   hand.push(card);
+  return card;
 }
 
 //Function to check if the hand is blackJack
@@ -106,31 +107,29 @@ const disableBetButtons = (boolean) => {
 
 //Function takes card on 16 and stay on 17
 //modifies Deck object
-//modifies dealersHand object
-//Return dealerScore
+//modifies dealersHand array
 const dealersTurn = (dealersHand, deck) => {
   dealerScore = getHandScore(dealersHand);
-  while(getHandScore(dealersHand) < 17 && !isBust(dealersHand)){
-    card = drawCard(dealersHand, deck);
-    dealerScore += getCardValue(card);
+  while(dealerScore < 17 && !isBust(dealersHand)){
+    let card = drawCard(dealersHand, deck);
+    let cardValue = getCardValue(card);
+    dealerScore += cardValue;
+    if(cardValue === GAME_VALUES.ACE_VALUE && dealerScore > GAME_VALUES.BLACKJACK_SCORE){
+      dealerScore -= GAME_VALUES.FACE_CARD_VALUE;
+    }
   }
-  displayHand(dealersHand, dealersHandDiv);
-  displayScore(dealerScore, dealerScoreDiv);
-
-  return dealerScore;
+  updateHandAndScore(dealersHand,dealerScore,dealersHandDiv,dealerScoreDiv);
 }
 
-//Function to Bet
-//Modifies global balance
-//return the bet placed
-const placeBet = (bet,balance) => {
-  balance -= bet;
-  return bet;
+//Function to update hand and score HTML
+const updateHandAndScore = (hand,score, handDiv, scoreDiv) =>{
+  displayHand(hand, handDiv);
+  displayScore(score, scoreDiv);
 }
 
 //Function calculates payout
 //Bet + winnings
-const getTotalPayout = (bet, multiplier) => {
+const calculatePayout = (bet, multiplier) => {
   return bet * multiplier;
 }
 
@@ -193,27 +192,29 @@ const determineWinner = (playersHand, dealersHand,) => {
 }
 
 //Function to pay the winning based on bet and outcome
-//modifies the global balance
 //returns the balance updated
 const payWinnings = (result, bet, balance) => {
   const multiplier = PAYOUT_MULTIPLIERS[result] || 0;
-  const payout = getTotalPayout(bet,multiplier);
+  const payout = calculatePayout(bet,multiplier);
 
   return balance += payout;
 }
 
 //Logic to handle the end of the game
+//Displays outcome
 //Pay winnings and update balance
+//return balance
 const endTurn = (playersHand,dealersHand, bet, balance) => {
   const result = determineWinner(playersHand,dealersHand);
   resultDiv.innerHTML = result;
   balance = payWinnings(result,bet,balance);
   balanceDiv.innerHTML = `${balance}`;
   resetButtons();
+
+  return balance;
 }
 
-//CURRENTLY DISPLAYING AN OBJECT
-//NEED FIXING TO SHOW MORE READABLE DATA
+//Display all cards in hand in a redable format in the given div
 const displayHand = (hand,div) => {
   const handString = hand.map(card => `${card.rank} of ${card.suit}`).join(' | ');
   div.innerHTML = handString;
@@ -247,13 +248,13 @@ const PAYOUT_MULTIPLIERS = {
   [GAME_RESULTS.PAY_BLACKJACK_1_TO_1]: 2,
 };
 
-
 //CONST GAME
 const GAME_VALUES = {
   ACE_VALUE: 11,
   BLACKJACK_SCORE: 21,
   FACE_CARD_VALUE : 10,
 }
+
 //GAME VARIABLES AND FLOW
 let deck = [];
 let playersHand = [];
@@ -287,16 +288,16 @@ let OnetoOneBlackjackButton = null;
 
 balanceDiv.innerHTML = `${balance}`;
 resetButtons();
-if(doubleDownButton){
+
+/* if(doubleDownButton){
   doubleDownButton.remove();
 }
 if(insuranceButton){
   insuranceButton.remove();
 }
-
+ */
 
 //EVENTLISTENERS
-
 //NEW GAME
 newGameButton.addEventListener("click", () => {
   //Create and Shuffle deck
@@ -324,6 +325,7 @@ dealButton.addEventListener("click", () => {
     messageDiv.innerHTML = "Not enough balance to place bet!";
     return;
   }
+  messageDiv.innerHTML = "";
   disableBetButtons(true);
 
   //Remove after debug
@@ -334,98 +336,27 @@ dealButton.addEventListener("click", () => {
   //Remove after debug
 
 
-  messageDiv.innerHTML = "";
   //remove bet from total balance
-  betDiv.innerHTML = `Bet: ${bet}`;
-  balance -= placeBet(bet,balance);
+  balance -= bet;
+  balanceDiv.innerHTML = `${balance}`;
   
   ({ playersHand, dealersHand } = dealCards(deck,3));
 
   //TOO MUCH REPEATED CODE WHEN DRAWCARD AND DISPLAYING HAND/SCORE
   //Display dealer's hand
   dealerScore = getHandScore(dealersHand);
-  displayHand(dealersHand, dealersHandDiv);
-  displayScore(dealerScore, dealerScoreDiv);
+  updateHandAndScore(dealersHand,dealerScore,dealersHandDiv,dealerScoreDiv);
   //Display player's hand
   playerScore = getHandScore(playersHand);
-  displayHand(playersHand, playersHandDiv);
-  displayScore(playerScore, playerScoreDiv);
+  updateHandAndScore(playersHand,playerScore,playersHandDiv,playerScoreDiv);
 
-
-  //IMPROVE THE LOGIC OF INSURANCE + BLACKJACKS BOTH PLAYER AND DEALER
-  //HANDLES INSURANCE WHEN DEALER SHOWING ACE
-  /* if(dealerScore == 11){
-    insuranceButton = createActionButton("insurance-button", "Insurance");
-    insuranceButton.addEventListener("click", () =>{
-      //insurance cost is half the original bet
-      let insurance = bet * 0.5;
-      if(balance >= insurance){
-        balance = placeBet(insurance);
-        messageDiv.innerHTML = "Player places insurance!";
-        insuranceDiv.innerHTML = `Insurance: ${insurance}`;
-        isInsurance = true;
-      }
-    })
-  }
-  //HANDLES BLACKJACK SCENARIO
-
-  //add logic in case dealers shows BJ (get paid 1 to 1)
-  //PLAYER HAS BLACKJACK
-  if(isBlackjack(playersHand)){
-    
-    if (dealerScore == 10 || dealerScore == 11){
-      dealersHand = drawCard(dealersHand, deck);
-      dealerScore = calculateScore(dealersHand);
-      displayHand(dealersHand, dealersHandDiv); 
-      displayScore(dealerScore, dealerScoreDiv);
-    }
-    result = determineWinner(playersHand, dealersHand);  
-    balance = payWinnings(result);
-    resultDiv.innerHTML = result;
-    resetButtons();
-  //REGULAR GAMEPLAY SCENARIO
-  }else{
-    dealButton.disabled = true;
-    newGameButton.disabled =true;
-
-    hitButton.disabled = false;
-    standButton.disabled = false;
-  }
-  balanceDiv.innerHTML = `${balance}`;
-
-  //Hanldes double down 
-  if(playerScore >= 9 && playerScore <= 11){
-    doubleDownButton = createActionButton("double-down-button", "Double");
-    doubleDownButton.addEventListener("click", () => {
-      if(balance >= bet){
-        balance = placeBet(bet);
-        balanceDiv.innerHTML = `${balance}`;
-        bet += bet;
-        betDiv.innerHTML = `Bet:  ${bet}`;
-        messageDiv.innerHTML = "Player doubles down! One card only."
-        
-        playersHand = drawCard(playersHand, deck);
-        playerScore = calculateScore(playersHand);
-        displayHand(playersHand, playersHandDiv);
-        displayScore(playerScore, playerScoreDiv);
-
-        dealersTurn(dealersHand,deck);
-        endTurn(playersHand,dealersHand);
-      }else{
-        messageDiv.innerHTML = "Not enough balance to double down!Just take a card brokie";
-      }
-    
-      doubleDownButton.remove();
-    });
-  } */
 })
 
 //STAND
 standButton.addEventListener("click", () => {
   //Dealer's turn
   dealersTurn(dealersHand,deck);
-  endTurn(playersHand,dealersHand,bet,balance);
-  
+  balance = endTurn(playersHand,dealersHand,bet,balance);
 });
 
 
@@ -437,16 +368,13 @@ hitButton.addEventListener("click", () => {
   if(cardValue === GAME_VALUES.ACE_VALUE && playerScore > GAME_VALUES.BLACKJACK_SCORE){
     playerScore -= GAME_VALUES.FACE_CARD_VALUE;
   }
-  displayHand(playersHand, playersHandDiv);
-  displayScore(playerScore, playerScoreDiv);
+  updateHandAndScore(playersHand,playerScore,playersHandDiv,playerScoreDiv);
 
   if(isBust(playersHand)){
-    endTurn(playersHand,dealersHand,bet,balance);
+    balance = endTurn(playersHand,dealersHand,bet,balance);
   }else if(playerScore == GAME_VALUES.BLACKJACK_SCORE){
     dealersTurn(dealersHand,deck);
-    endTurn(playersHand,dealersHand,bet,balance);
+    balance = endTurn(playersHand,dealersHand,bet,balance);
   }
 });
 
-//const newCard = { rank : "Ace", suit : "Diamonds"};
-//console.log(getCardValue(newCard))
