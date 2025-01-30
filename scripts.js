@@ -1,21 +1,12 @@
-// 1- Create deck
-// 2- Shuffle cards
-// 3 - Deal cards
-// 4- Remove them from deck
-// 5- Implement players options
-// 6- Create dealers logic
-// 7- Determine the winner
-// 8- Play again
-
-
 //FUNCTIONS
-//Create deck
-//Return order list obj
+
+//Functions to create a deck
+//Return ordered list obj
 const createDeck = () =>{
   const deck = [];
   const suits = ["Hearts", "Diamonds", "Clubs", "Spades"];
   const ranks = [ "Ace","2", "3", "4", "5", "6", "7", "8", "9", "10","Jack", "Queen", "King"];
-  
+
   // Generate the deck
   suits.forEach(suit => {
     ranks.forEach(rank => {
@@ -29,23 +20,23 @@ const createDeck = () =>{
 //return deck list obj
 const shuffleDeck = (deck) => {
   for (let i = deck.length - 1; i > 0; i--) {
-
     const j = Math.floor(Math.random() * (i + 1));
-
     [deck[i], deck[j]] = [deck[j], deck[i]];
   }
   return deck;
 }
 
-
 //Function to calculate value of the card
-//Return int 
+//Return int value
 const getCardValue = (card) => {
   let value = 0;
-  if (card.rank == "Ace") value  = 11;
-  else if (card.rank == "Jack" || card.rank == "Queen" || card.rank == "King") value = 10;
-  else value = parseInt(card.rank);
-
+  if (card.rank == "Ace") {
+    value  = GAME_VALUES.ACE_VALUE;
+  }else if (card.rank == "Jack" || card.rank == "Queen" || card.rank == "King"){
+    value = GAME_VALUES.FACE_CARD_VALUE;
+  }else{
+    value = parseInt(card.rank);
+  }
   return value;
 }
 
@@ -54,18 +45,19 @@ const getCardValue = (card) => {
 const getHandScore = (hand) => {
   let aces = 0;
   let score = 0;
-  for(card in hand){
-    score += getCardValue(hand[card]);   
-    if(hand[card].rank == "Ace"){
+  for(let card of hand){
+    score += getCardValue(card);   
+    if(card.rank == "Ace"){
       aces++;
     }   
   }
-  while(score > 21 && aces > 0){
+  while(score > GAME_VALUES.BLACKJACK_SCORE && aces > 0){
     score -= 10;
     aces--;
   }
   return score;
 }
+
 
 //Function to get card from deck
 //modifies Deck object and hand
@@ -73,21 +65,19 @@ const getHandScore = (hand) => {
 const drawCard = (hand, deck) => {
   const card = deck.shift();
   hand.push(card);
-  return card;
 }
 
 //Function to check if the hand is blackJack
 //return boolean
 const isBlackjack = (hand) =>{
-  return getHandScore(hand) == 21 && hand.length == 2;
+  return getHandScore(hand) == GAME_VALUES.BLACKJACK_SCORE && hand.length == 2;
 }
 
 //function to check if the hand is bust
 //return boolean
 const isBust = (hand) =>{
-  return getHandScore(hand) > 21;
+  return getHandScore(hand) > GAME_VALUES.BLACKJACK_SCORE;
 }
-
 
 //Function to deal first n of cards
 //modifies Deck object
@@ -103,8 +93,8 @@ const dealCards = (deck, nCards) => {
       dealersHand.push(deck.shift());
     }
   }
-  return {playersHand, dealersHand};
 
+  return {playersHand, dealersHand};
 }
 
 //Function to activate or deactivate Bet Buttons
@@ -126,10 +116,9 @@ const dealersTurn = (dealersHand, deck) => {
   }
   displayHand(dealersHand, dealersHandDiv);
   displayScore(dealerScore, dealerScoreDiv);
+
   return dealerScore;
 }
-
-//Balance and bets functions
 
 //Function to Bet
 //Modifies global balance
@@ -151,7 +140,6 @@ const resetButtons = () => {
   standButton.disabled = true;
   dealButton.disabled = true;
   newGameButton.disabled = false;
-  disableBetButtons(true);
 }
 
 //Empty HTML and reset buttons
@@ -173,12 +161,14 @@ const resetGame = () =>{
 }
 
 // General function to create a button in the DOM
+//Return button created
 const createActionButton = (id, label) => {
   const button = document.createElement("button");
   const actionsContainer = document.querySelector(".actions");
   button.setAttribute("id", id);
   button.innerHTML = label; 
   actionsContainer.insertBefore(button, actionsContainer.children[1]);
+
   return button; 
 };
 
@@ -188,7 +178,7 @@ const determineWinner = (playersHand, dealersHand,) => {
   const playerScore = getHandScore(playersHand);
   const dealerScore = getHandScore(dealersHand);
   //BlackJack cases
-  if (isBlackjack(playersHand) && dealerScore === 11) return GAME_RESULTS.PAY_BLACKJACK_1_TO_1;
+  if (isBlackjack(playersHand) && dealerScore === GAME_VALUES.ACE_VALUE) return GAME_RESULTS.PAY_BLACKJACK_1_TO_1;
   if (isBlackjack(playersHand) && isBlackjack(dealersHand)) return GAME_RESULTS.BOTH_BLACKJACK;
   if (isBlackjack(playersHand)) return GAME_RESULTS.PLAYER_BLACKJACK;
   if (isBlackjack(dealersHand)) return GAME_RESULTS.DEALER_BLACKJACK;
@@ -207,11 +197,13 @@ const determineWinner = (playersHand, dealersHand,) => {
 //returns the balance updated
 const payWinnings = (result, bet, balance) => {
   const multiplier = PAYOUT_MULTIPLIERS[result] || 0;
-  const payout = calculatePayout(bet,multiplier);
+  const payout = getTotalPayout(bet,multiplier);
+
   return balance += payout;
 }
 
 //Logic to handle the end of the game
+//Pay winnings and update balance
 const endTurn = (playersHand,dealersHand, bet, balance) => {
   const result = determineWinner(playersHand,dealersHand);
   resultDiv.innerHTML = result;
@@ -255,6 +247,13 @@ const PAYOUT_MULTIPLIERS = {
   [GAME_RESULTS.PAY_BLACKJACK_1_TO_1]: 2,
 };
 
+
+//CONST GAME
+const GAME_VALUES = {
+  ACE_VALUE: 11,
+  BLACKJACK_SCORE: 21,
+  FACE_CARD_VALUE : 10,
+}
 //GAME VARIABLES AND FLOW
 let deck = [];
 let playersHand = [];
@@ -300,10 +299,8 @@ if(insuranceButton){
 
 //NEW GAME
 newGameButton.addEventListener("click", () => {
-  //Empty both deal and players hands
   //Create and Shuffle deck
   deck = shuffleDeck(createDeck(deck));
-  
   //Empty HTML and reset buttons
   resetGame();
 })
@@ -328,31 +325,36 @@ dealButton.addEventListener("click", () => {
     return;
   }
   disableBetButtons(true);
+
+  //Remove after debug
+  dealButton.disabled = true;
+  newGameButton.disabled =true;
+  hitButton.disabled = false;
+  standButton.disabled = false;
+  //Remove after debug
+
+
   messageDiv.innerHTML = "";
   //remove bet from total balance
   betDiv.innerHTML = `Bet: ${bet}`;
-  balance = placeBet(bet);
+  balance -= placeBet(bet,balance);
   
-  ({ playersHand, dealersHand } = dealCards(deck));
-  //TOO MUCH REPEATED CODE WHEN DRAWCARD AND DISPLAYING HAND/SCORE
+  ({ playersHand, dealersHand } = dealCards(deck,3));
 
+  //TOO MUCH REPEATED CODE WHEN DRAWCARD AND DISPLAYING HAND/SCORE
   //Display dealer's hand
-  dealerScore = calculateScore(dealersHand);
+  dealerScore = getHandScore(dealersHand);
   displayHand(dealersHand, dealersHandDiv);
   displayScore(dealerScore, dealerScoreDiv);
   //Display player's hand
-  playerScore = calculateScore(playersHand);
+  playerScore = getHandScore(playersHand);
   displayHand(playersHand, playersHandDiv);
   displayScore(playerScore, playerScoreDiv);
 
 
   //IMPROVE THE LOGIC OF INSURANCE + BLACKJACKS BOTH PLAYER AND DEALER
-  
-
-  //
-
   //HANDLES INSURANCE WHEN DEALER SHOWING ACE
-  if(dealerScore == 11){
+  /* if(dealerScore == 11){
     insuranceButton = createActionButton("insurance-button", "Insurance");
     insuranceButton.addEventListener("click", () =>{
       //insurance cost is half the original bet
@@ -415,35 +417,36 @@ dealButton.addEventListener("click", () => {
     
       doubleDownButton.remove();
     });
-  }
+  } */
 })
 
 //STAND
 standButton.addEventListener("click", () => {
   //Dealer's turn
   dealersTurn(dealersHand,deck);
-  endTurn(playersHand,dealersHand);
+  endTurn(playersHand,dealersHand,bet,balance);
+  
 });
 
 
 //HIT
 hitButton.addEventListener("click", () => {
-  playersHand = drawCard(playersHand, deck);
-  
-  playerScore = calculateScore(playersHand);
+  const card = drawCard(playersHand, deck);
+  const cardValue = getCardValue(card);
+  playerScore += cardValue;
+  if(cardValue === GAME_VALUES.ACE_VALUE && playerScore > GAME_VALUES.BLACKJACK_SCORE){
+    playerScore -= GAME_VALUES.FACE_CARD_VALUE;
+  }
   displayHand(playersHand, playersHandDiv);
   displayScore(playerScore, playerScoreDiv);
 
   if(isBust(playersHand)){
-    resultDiv.innerHTML = "Player Busts! Dealer Wins!";
-    resetButtons();
-
-  }else if(playerScore == 21){
+    endTurn(playersHand,dealersHand,bet,balance);
+  }else if(playerScore == GAME_VALUES.BLACKJACK_SCORE){
     dealersTurn(dealersHand,deck);
-    endTurn(playersHand,dealersHand);
+    endTurn(playersHand,dealersHand,bet,balance);
   }
-  
 });
 
-
-
+//const newCard = { rank : "Ace", suit : "Diamonds"};
+//console.log(getCardValue(newCard))
