@@ -22,7 +22,7 @@ class Deck {
     this.cards = [];
     this.numberOfDekcs = numberOfDekcs;
     this.createDeck();
-    //this.shuffleDeck();
+    this.shuffleDeck();
   }
 
   createDeck(){
@@ -45,6 +45,11 @@ class Deck {
     }
   }
 
+
+  dealCard(){
+    return this.cards.shift();
+  }
+
   reset(){
     this.cards = [];
     this.createDeck();
@@ -52,6 +57,10 @@ class Deck {
   }
 }
 
+
+const deck = new Deck()
+console.log(deck.cards.length);
+console.log(deck.cards);
 
 /* //FUNCTIONS
 
