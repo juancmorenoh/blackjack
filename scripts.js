@@ -1,3 +1,19 @@
+class Card {
+  suit;
+  value;
+  
+  constructor(suit,value){
+    this.suit = suit;
+    this.value = value;
+  }
+
+  getNumericValue(){
+     if(this.value == "A") return 11;
+     if(this.value == "J" || this.value == "Q" || this.value == "K") return 10;
+     else return parseInt(this.value); 
+  }
+}
+
 class Deck {
   cards;
   numberOfDekcs;
@@ -6,12 +22,12 @@ class Deck {
     this.cards = [];
     this.numberOfDekcs = numberOfDekcs;
     this.createDeck();
-    this.shuffleDeck();
+    //this.shuffleDeck();
   }
 
   createDeck(){
     const suits = ["Hearts", "Diamonds", "Clubs", "Spades"];
-    const values = [ "A","2", "3", "4", "5", "6", "7", "8", "9", "10","J", "Q", "K"];
+    const values = [ "2", "3", "4", "5", "6", "7", "8", "9", "10","J", "Q", "K", "A"];
 
     for (let i = 0; i < this.numberOfDekcs; i++) {
       suits.forEach( suit => {
@@ -35,6 +51,7 @@ class Deck {
     this.shuffleDeck();
   }
 }
+
 
 /* //FUNCTIONS
 
