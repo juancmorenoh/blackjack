@@ -1,4 +1,40 @@
+class Deck {
+  cards;
+  numberOfDekcs;
 
+  constructor(numberOfDekcs = 1){
+    this.cards = [];
+    this.numberOfDekcs = numberOfDekcs;
+    this.createDeck();
+    this.shuffleDeck();
+  }
+
+  createDeck(){
+    const suits = ["Hearts", "Diamonds", "Clubs", "Spades"];
+    const values = [ "A","2", "3", "4", "5", "6", "7", "8", "9", "10","J", "Q", "K"];
+
+    for (let i = 0; i < this.numberOfDekcs; i++) {
+      suits.forEach( suit => {
+        values.forEach( value => {
+          this.cards.push(new Card(suit, value));
+        });
+      });
+    };
+  };
+
+  shuffleDeck(){
+    for (let i = this.cards.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];
+    }
+  }
+
+  reset(){
+    this.cards = [];
+    this.createDeck();
+    this.shuffleDeck();
+  }
+}
 
 /* //FUNCTIONS
 
