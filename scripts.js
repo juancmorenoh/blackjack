@@ -57,11 +57,59 @@ class Deck {
   }
 }
 
+class Player{
+  hand;
+  chairNumber;
+  score;
+  bust;
+
+  constructor(chairNumber){
+    this.hand = [];
+    this.chairNumber = chairNumber;
+    this.inGame = true;
+  }
+
+  addCard(card){
+    this.hand.push(card);
+  }
+
+  calculateScore(){
+    let aces = 0;
+    this.score = 0;
+    this.hand.forEach( card => {
+      this.score += card.getNumericValue();   
+      if(card.value == "A"){
+        aces++;
+      };   
+    });
+  
+    while(this.score > 21 && aces > 0){
+      this.score -= 10;
+      aces--;
+    }
+    return this.score;
+  }
+
+  isBust(){
+    //this.calculateScore();
+    if(this.score < 21) this.bust = false;
+    return this.inGame;
+  }
+}
+
+
 
 const deck = new Deck()
+//console.log(deck.numberOfDekcs);
 console.log(deck.cards.length);
 console.log(deck.cards);
+const Player1 = new Player(1);
+Player1.addCard(deck.dealCard());
+Player1.addCard(deck.dealCard());
 
+console.log(Player1.hand);
+console.log(Player1.calculateScore());
+console.log(Player1.isBust());
 /* //FUNCTIONS
 
 //Functions to create a deck
