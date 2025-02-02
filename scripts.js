@@ -57,20 +57,16 @@ class Deck {
   }
 }
 
-class Player{
-  hand;
-  chairNumber;
+class Hand {
+  cards;
   score;
-  bust;
 
-  constructor(chairNumber){
-    this.hand = [];
-    this.chairNumber = chairNumber;
-    this.inGame = true;
+  constructor(){
+    this.cards = [];
   }
 
   addCard(card){
-    this.hand.push(card);
+    this.cards.push(card);
   }
 
   calculateScore(){
@@ -89,11 +85,23 @@ class Player{
     }
     return this.score;
   }
+}
+
+class Player{
+  chairNumber;
+  bust;
+  hand;
+
+  constructor(chairNumber){
+    this.hand = new Hand();
+    this.chairNumber = chairNumber;
+    this.bust = false;
+  }
 
   isBust(){
     //this.calculateScore();
-    if(this.score < 21) this.bust = false;
-    return this.inGame;
+    if(this.hand.calculateScore() < 21) this.bust = false;
+    return this.bust;
   }
 }
 
