@@ -72,7 +72,7 @@ class Hand {
   calculateScore(){
     let aces = 0;
     this.score = 0;
-    this.hand.forEach( card => {
+    this.cards.forEach( card => {
       this.score += card.getNumericValue();   
       if(card.value == "A"){
         aces++;
@@ -85,24 +85,26 @@ class Hand {
     }
     return this.score;
   }
+
+  isBlackJack(){
+    return this.score == 21 && this.cards.length == 2;
+  }
+
+  isBust(){
+    //this.calculateScore();
+    return this.score > 21
+  }
 }
 
 class Player{
   chairNumber;
-  bust;
   hand;
 
   constructor(chairNumber){
     this.hand = new Hand();
     this.chairNumber = chairNumber;
-    this.bust = false;
   }
 
-  isBust(){
-    //this.calculateScore();
-    if(this.hand.calculateScore() < 21) this.bust = false;
-    return this.bust;
-  }
 }
 
 
@@ -112,12 +114,14 @@ const deck = new Deck()
 console.log(deck.cards.length);
 console.log(deck.cards);
 const Player1 = new Player(1);
-Player1.addCard(deck.dealCard());
-Player1.addCard(deck.dealCard());
+Player1.hand.addCard(deck.dealCard());
+Player1.hand.addCard(deck.dealCard());
+Player1.hand.addCard(deck.dealCard());
 
 console.log(Player1.hand);
-console.log(Player1.calculateScore());
-console.log(Player1.isBust());
+console.log(Player1.hand.calculateScore());
+console.log(Player1.hand.isBust());
+console.log(Player1.hand.isBlackJack());
 /* //FUNCTIONS
 
 //Functions to create a deck
