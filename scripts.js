@@ -1,4 +1,6 @@
-//FUNCTIONS
+
+
+/* //FUNCTIONS
 
 //Functions to create a deck
 //Return ordered list obj
@@ -58,7 +60,6 @@ const getHandScore = (hand) => {
   return score;
 }
 
-
 //Function to get card from deck
 //modifies Deck object and hand
 //Return the card
@@ -86,12 +87,12 @@ const isBust = (hand) =>{
 const dealCards = (deck, nCards) => {
   const playersHand = [];
   const dealersHand = [];
-  
+
   for (let i = 0; i < nCards; i++){
     if(i % 2 == 0){
-      playersHand.push(deck.shift());
+      drawCard(playersHand, deck);
     }else{
-      dealersHand.push(deck.shift());
+      drawCard(dealersHand, deck);
     }
   }
 
@@ -108,17 +109,27 @@ const disableBetButtons = (boolean) => {
 //Function takes card on 16 and stay on 17
 //modifies Deck object
 //modifies dealersHand array
+//Return dealer Score
 const dealersTurn = (dealersHand, deck) => {
-  dealerScore = getHandScore(dealersHand);
+  let dealerScore = getHandScore(dealersHand);
+  
+  let dealerAces = dealersHand.filter(card => card.rank === "Ace").length;
+
   while(dealerScore < 17 && !isBust(dealersHand)){
     let card = drawCard(dealersHand, deck);
     let cardValue = getCardValue(card);
     dealerScore += cardValue;
-    if(cardValue === GAME_VALUES.ACE_VALUE && dealerScore > GAME_VALUES.BLACKJACK_SCORE){
+    if(cardValue == GAME_VALUES.ACE_VALUE){
+      dealerAces++;
+    }
+    while(dealerAces > 0 && dealerScore > GAME_VALUES.BLACKJACK_SCORE){
       dealerScore -= GAME_VALUES.FACE_CARD_VALUE;
+      dealerAces--;
     }
   }
   updateHandAndScore(dealersHand,dealerScore,dealersHandDiv,dealerScoreDiv);
+
+  return dealerScore;
 }
 
 //Function to update hand and score HTML
@@ -154,9 +165,7 @@ const resetGame = () =>{
   dealersHand = [];
   playerScore = 0;
   dealerScore = 0;
-
   dealButton.disabled = false;
-  disableBetButtons(false);
 }
 
 // General function to create a button in the DOM
@@ -256,7 +265,7 @@ const GAME_VALUES = {
 }
 
 //GAME VARIABLES AND FLOW
-let deck = [];
+let deck = []; 
 let playersHand = [];
 let dealersHand = [];
 let balance = 100;
@@ -280,7 +289,7 @@ let dealButton = document.getElementById("deal-button");
 let hitButton = document.getElementById("hit-button");
 let standButton = document.getElementById("stand-button");
 
-let betButtons = document.querySelectorAll('.bet-container button');
+let betButtons = document.querySelectorAll('.bet-button');
 
 let doubleDownButton = null;
 let insuranceButton = null;
@@ -295,7 +304,7 @@ resetButtons();
 if(insuranceButton){
   insuranceButton.remove();
 }
- */
+ 
 
 //EVENTLISTENERS
 //NEW GAME
@@ -304,6 +313,7 @@ newGameButton.addEventListener("click", () => {
   deck = shuffleDeck(createDeck(deck));
   //Empty HTML and reset buttons
   resetGame();
+  disableBetButtons(false);
 })
 
 //PLACE THE BET
@@ -355,7 +365,7 @@ dealButton.addEventListener("click", () => {
 //STAND
 standButton.addEventListener("click", () => {
   //Dealer's turn
-  dealersTurn(dealersHand,deck);
+  dealerScore = dealersTurn(dealersHand,deck);
   balance = endTurn(playersHand,dealersHand,bet,balance);
 });
 
@@ -364,17 +374,21 @@ standButton.addEventListener("click", () => {
 hitButton.addEventListener("click", () => {
   const card = drawCard(playersHand, deck);
   const cardValue = getCardValue(card);
+  const playerAces = playersHand.filter(card => card.rank === "Ace").length;
   playerScore += cardValue;
-  if(cardValue === GAME_VALUES.ACE_VALUE && playerScore > GAME_VALUES.BLACKJACK_SCORE){
+
+  while(playerAces > 0 && playerScore > GAME_VALUES.BLACKJACK_SCORE){
     playerScore -= GAME_VALUES.FACE_CARD_VALUE;
+    playerAces--;
   }
   updateHandAndScore(playersHand,playerScore,playersHandDiv,playerScoreDiv);
 
   if(isBust(playersHand)){
     balance = endTurn(playersHand,dealersHand,bet,balance);
   }else if(playerScore == GAME_VALUES.BLACKJACK_SCORE){
-    dealersTurn(dealersHand,deck);
+    dealerScore = dealersTurn(dealersHand,deck);
     balance = endTurn(playersHand,dealersHand,bet,balance);
   }
-});
+}); */
+
 
