@@ -67,6 +67,7 @@ class Hand {
 
   addCard(card){
     this.cards.push(card);
+    this.calculateScore();
   }
 
   calculateScore(){
@@ -91,7 +92,7 @@ class Hand {
   }
 
   canSplit(){
-    return this.cards[0].value == this.cards[1].value && this.cards.length == 2;
+    return this.cards[0].getNumericValue() == this.cards[1].getNumericValue() && this.cards.length == 2;
   }
 
   isBlackJack(){
@@ -158,20 +159,17 @@ const slot2 = Player1.addSlot();
 slot1.placeBet(100);
 slot2.placeBet(50);
 console.log(Player1.balance);
-slot1.hand.addCard(new Card("Hearts","9"));
-slot1.hand.addCard(new Card("Diamonds","4"));
+
+slot1.hand.addCard(new Card("Diamonds","J"));
 slot1.hand.addCard(new Card("Diamonds","10"));
-slot2.hand.addCard(new Card("Diamonds","3"));
-slot2.hand.addCard(new Card("Diamonds","5"));
+
 
 console.log(slot1.hand);
-//console.log(slot1.hand.calculateScore());
+
 console.log(`Can be doubled : ${slot1.hand.canDouble()}`);
 console.log(`Can be split : ${slot1.hand.canSplit()}`);
 console.log(`Is it Bust: ${slot1.hand.isBust()}`);
-console.log(slot2.hand);
-console.log(slot1.hand.calculateScore());
-console.log(`Is it Bust: ${slot1.hand.isBust()}`);
+
 
 
 
