@@ -12,6 +12,10 @@ class Card {
      if(this.value == "J" || this.value == "Q" || this.value == "K") return 10;
      else return parseInt(this.value); 
   }
+
+  toString() {
+    return `${this.value} of ${this.suit}`;
+  }
 }
 
 class Deck {
@@ -103,6 +107,10 @@ class Hand {
     //this.calculateScore();
     return this.score > 21
   }
+
+  toString() {
+    return `Hand: [${this.cards.join(", ")}] | Score: ${this.score}`;
+  }
 }
 
 class Player{
@@ -145,114 +153,51 @@ class Slot{
   }
 }
 
+class Dealer{
+  hand;
+
+  constructor(){
+    this.hand = new Hand();
+  }
+
+  play(){
+    while(this.hand.score < 17){
+      this.hand.addCard(deck.dealCard());
+    }
+  }
+}
 
 
 const deck = new Deck()
+const player1 = new Player("Camilo");
+const dealer = new Dealer();
 
-const Player1 = new Player("Camilo");
-console.log(Player1.name)
-Player1.addBalance(300);
-console.log(Player1.balance);
+player1.addBalance(300);
 
-const slot1 = Player1.addSlot();
-const slot2 = Player1.addSlot();
+const slot1 = player1.addSlot();
 slot1.placeBet(100);
-slot2.placeBet(50);
-console.log(Player1.balance);
+
 
 slot1.hand.addCard(new Card("Diamonds","J"));
+dealer.hand.addCard(new Card("Diamonds","3"));
 slot1.hand.addCard(new Card("Diamonds","10"));
 
+console.log(`Dealer shows: ${dealer.hand}`);
+console.log(`Player1 shows: ${slot1.hand}`);
+dealer.play();
 
-console.log(slot1.hand);
-
-console.log(`Can be doubled : ${slot1.hand.canDouble()}`);
-console.log(`Can be split : ${slot1.hand.canSplit()}`);
-console.log(`Is it Bust: ${slot1.hand.isBust()}`);
-
+console.log(`Dealer shows: ${dealer.hand}`);
 
 
 
-/* //FUNCTIONS
 
-//Functions to create a deck
-//Return ordered list obj
-const createDeck = () =>{
-  const deck = [];
-  const suits = ["Hearts", "Diamonds", "Clubs", "Spades"];
-  const ranks = [ "Ace","2", "3", "4", "5", "6", "7", "8", "9", "10","Jack", "Queen", "King"];
 
-  // Generate the deck
-  suits.forEach(suit => {
-    ranks.forEach(rank => {
-      deck.push({ rank, suit });
-    });
-  });
-  return deck;
-}
 
-//Fisher-Yates Shuffle Function to Shuffle the deck
-//return deck list obj
-const shuffleDeck = (deck) => {
-  for (let i = deck.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [deck[i], deck[j]] = [deck[j], deck[i]];
-  }
-  return deck;
-}
 
-//Function to calculate value of the card
-//Return int value
-const getCardValue = (card) => {
-  let value = 0;
-  if (card.rank == "Ace") {
-    value  = GAME_VALUES.ACE_VALUE;
-  }else if (card.rank == "Jack" || card.rank == "Queen" || card.rank == "King"){
-    value = GAME_VALUES.FACE_CARD_VALUE;
-  }else{
-    value = parseInt(card.rank);
-  }
-  return value;
-}
 
-//Calculate score of a hand
-//return total score
-const getHandScore = (hand) => {
-  let aces = 0;
-  let score = 0;
-  for(let card of hand){
-    score += getCardValue(card);   
-    if(card.rank == "Ace"){
-      aces++;
-    }   
-  }
-  while(score > GAME_VALUES.BLACKJACK_SCORE && aces > 0){
-    score -= 10;
-    aces--;
-  }
-  return score;
-}
 
-//Function to get card from deck
-//modifies Deck object and hand
-//Return the card
-const drawCard = (hand, deck) => {
-  const card = deck.shift();
-  hand.push(card);
-  return card;
-}
 
-//Function to check if the hand is blackJack
-//return boolean
-const isBlackjack = (hand) =>{
-  return getHandScore(hand) == GAME_VALUES.BLACKJACK_SCORE && hand.length == 2;
-}
-
-//function to check if the hand is bust
-//return boolean
-const isBust = (hand) =>{
-  return getHandScore(hand) > GAME_VALUES.BLACKJACK_SCORE;
-}
+/*
 
 //Function to deal first n of cards
 //modifies Deck object
