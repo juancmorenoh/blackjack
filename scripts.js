@@ -20,7 +20,7 @@ class Card {
 
 class Deck {
   cards;
-  numberOfDekcs;
+  numberOfDecks;
 
   constructor(numberOfDekcs = 1){
     this.cards = [];
