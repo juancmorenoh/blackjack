@@ -97,31 +97,70 @@ class Hand {
 }
 
 class Player{
-  chairNumber;
-  hand;
+  balance;
+  name;
+  slots;
 
-  constructor(chairNumber){
-    this.hand = new Hand();
-    this.chairNumber = chairNumber;
+  constructor(name){
+    this.balance = 0;
+    this.name = name;
+    this.slots = [];
   }
 
+  addBalance(amount){
+    this.balance += amount;
+  }
+
+  addSlot(){
+    const slot = new Slot(this);
+    this.slots.push(slot);
+    return slot;
+  }
+}
+
+class Slot{
+  hand;
+  player;
+  bet;
+
+  constructor(player){
+    this.hand = new Hand();
+    this.player = player;
+    this.bet = 0;
+  }
+
+  placeBet(amount){
+    if(amount > this.player.balance) return "Not enough money";
+    this.bet = amount;
+    this.player.balance -= amount;
+  }
 }
 
 
 
 const deck = new Deck()
-//console.log(deck.numberOfDekcs);
-console.log(deck.cards.length);
-console.log(deck.cards);
-const Player1 = new Player(1);
-Player1.hand.addCard(deck.dealCard());
-Player1.hand.addCard(deck.dealCard());
-Player1.hand.addCard(deck.dealCard());
 
-console.log(Player1.hand);
-console.log(Player1.hand.calculateScore());
-console.log(Player1.hand.isBust());
-console.log(Player1.hand.isBlackJack());
+const Player1 = new Player("Camilo");
+console.log(Player1.name)
+Player1.addBalance(300);
+console.log(Player1.balance);
+
+const slot1 = Player1.addSlot();
+const slot2 = Player1.addSlot();
+slot1.placeBet(100);
+slot2.placeBet(50);
+console.log(Player1.balance);
+slot1.hand.addCard(deck.dealCard());
+slot2.hand.addCard(deck.dealCard());
+slot1.hand.addCard(deck.dealCard());
+slot2.hand.addCard(deck.dealCard());
+console.log(slot1.hand);
+console.log(slot1.hand.calculateScore());
+console.log(slot2.hand);
+console.log(slot2.hand.calculateScore());
+
+console.log(Player1.slots.length);
+
 /* //FUNCTIONS
 
 //Functions to create a deck
