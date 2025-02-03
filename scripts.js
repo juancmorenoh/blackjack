@@ -86,6 +86,14 @@ class Hand {
     return this.score;
   }
 
+  canDouble(){
+    return this.score > 8 && this.score < 12 && this.cards.length == 2;
+  }
+
+  canSplit(){
+    return this.cards[0].value == this.cards[1].value && this.cards.length == 2;
+  }
+
   isBlackJack(){
     return this.score == 21 && this.cards.length == 2;
   }
@@ -150,16 +158,22 @@ const slot2 = Player1.addSlot();
 slot1.placeBet(100);
 slot2.placeBet(50);
 console.log(Player1.balance);
-slot1.hand.addCard(deck.dealCard());
-slot2.hand.addCard(deck.dealCard());
-slot1.hand.addCard(deck.dealCard());
-slot2.hand.addCard(deck.dealCard());
-console.log(slot1.hand);
-console.log(slot1.hand.calculateScore());
-console.log(slot2.hand);
-console.log(slot2.hand.calculateScore());
+slot1.hand.addCard(new Card("Hearts","9"));
+slot1.hand.addCard(new Card("Diamonds","4"));
+slot1.hand.addCard(new Card("Diamonds","10"));
+slot2.hand.addCard(new Card("Diamonds","3"));
+slot2.hand.addCard(new Card("Diamonds","5"));
 
-console.log(Player1.slots.length);
+console.log(slot1.hand);
+//console.log(slot1.hand.calculateScore());
+console.log(`Can be doubled : ${slot1.hand.canDouble()}`);
+console.log(`Can be split : ${slot1.hand.canSplit()}`);
+console.log(`Is it Bust: ${slot1.hand.isBust()}`);
+console.log(slot2.hand);
+console.log(slot1.hand.calculateScore());
+console.log(`Is it Bust: ${slot1.hand.isBust()}`);
+
+
 
 /* //FUNCTIONS
 
