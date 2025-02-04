@@ -218,10 +218,9 @@ class Game{
         slot.hit(this.deck);
         console.log(`Dealt to Slot ${index}: ${slot.hand}`);
       });
-      if(round==0){
-        this.dealer.hand.addCard(this.deck.dealCard());
-        console.log(`Dealt to Dealer: ${this.dealer.hand}`);
-      }    
+      this.dealer.hand.addCard(this.deck.dealCard());
+      console.log(`Dealt to Dealer: ${this.dealer.hand}`);
+         
     }
   }
 }
