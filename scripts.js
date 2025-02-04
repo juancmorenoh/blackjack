@@ -63,7 +63,6 @@ class Deck {
 
 class Hand {
   cards;
-  score;
 
   constructor(){
     this.cards = [];
@@ -71,26 +70,28 @@ class Hand {
 
   addCard(card){
     this.cards.push(card);
-    this.calculateScore();
   }
 
   calculateScore(){
     let aces = 0;
-    this.score = 0;
+    let score = 0;
     this.cards.forEach( card => {
-      this.score += card.getNumericValue();   
+      score += card.getNumericValue();   
       if(card.value == "A"){
         aces++;
       };   
     });
   
-    while(this.score > 21 && aces > 0){
-      this.score -= 10;
+    while(score > 21 && aces > 0){
+      score -= 10;
       aces--;
     }
-    return this.score;
+    return score;
   }
 
+  get score(){
+    return this.calculateScore();
+  }
   canDouble(){
     return this.score > 8 && this.score < 12 && this.cards.length == 2;
   }
@@ -151,6 +152,14 @@ class Slot{
     this.bet = amount;
     this.player.balance -= amount;
   }
+
+  //split()
+  //double()
+  //stand()
+
+  hit(deck){
+    this.hand.addCard(deck.dealCard());
+  }
 }
 
 class Dealer{
@@ -168,34 +177,71 @@ class Dealer{
 }
 
 
-const deck = new Deck()
-const player1 = new Player("Camilo");
-const dealer = new Dealer();
+class Game{
+  deck;
+  selectedSlots;
+  dealer;
+  player;
 
-player1.addBalance(300);
+  constructor(){
+    this.deck = new Deck(6);  
+    this.player = new Player("Camilo");
+    this.dealer = new Dealer();
+    this.selectedSlots = [];
+  }
 
-const slot1 = player1.addSlot();
-slot1.placeBet(100);
+  joinSlot(slotIndex){
+    if(!this.selectedSlots[slotIndex]){
+      this.selectedSlots[slotIndex] = this.player.addSlot();
+      return true;
+    }
+    return false;
+  }
 
+  printSlots(){
+    this.selectedSlots.forEach((slot, index) => {
+      console.log(`Slot ${index}: ${slot.hand}`);
+    });
+  }
+  dealCards(){
+    if(this.selectedSlots.length == 0){
+      alert("Please select at least one slot");
+      return;
+    }
 
-slot1.hand.addCard(new Card("Diamonds","J"));
-dealer.hand.addCard(new Card("Diamonds","3"));
-slot1.hand.addCard(new Card("Diamonds","10"));
+    const totalRounds = 2;
+    for (let round = 0 ; round < totalRounds ; round++){
+      this.selectedSlots.forEach((slot,index) =>{
+        slot.hit(this.deck);
+        console.log(`Dealt to Slot ${index}: ${slot.hand}`);
+      });
+      if(round==0){
+        this.dealer.hand.addCard(this.deck.dealCard());
+        console.log(`Dealt to Dealer: ${this.dealer.hand}`);
+      }    
+    }
+  }
+}
 
-console.log(`Dealer shows: ${dealer.hand}`);
-console.log(`Player1 shows: ${slot1.hand}`);
-dealer.play();
+const game = new Game();
 
-console.log(`Dealer shows: ${dealer.hand}`);
+//ASSIGN SLOT
+document.querySelectorAll(".slot-btn").forEach((btn) => {
+  btn.addEventListener("click", function() {
+    const slotIndex = this.getAttribute("data-slot");
+    if (game.joinSlot(slotIndex)) {
+      this.textContent = `Playing by ${game.player.name}`;
+      this.disabled = true;
+    }
+    game.printSlots();
+  });
 
+});
 
-
-
-
-
-
-
-
+//DEAL-BUTTON
+document.getElementById("deal-button").addEventListener("click", function() {
+    game.dealCards();
+});
 
 /*
 
