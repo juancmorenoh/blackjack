@@ -148,7 +148,10 @@ class Slot{
   }
 
   placeBet(amount){
-    if(amount > this.player.balance) return "Not enough money";
+    if(amount > this.player.balance){
+      alert("Not enough money");
+      return;
+    }
     this.bet = amount;
     this.player.balance -= amount;
   }
@@ -183,9 +186,9 @@ class Game{
   dealer;
   player;
 
-  constructor(){
+  constructor(player){
     this.deck = new Deck(6);  
-    this.player = new Player("Camilo");
+    this.player = player;
     this.dealer = new Dealer();
     this.selectedSlots = [];
   }
@@ -223,7 +226,9 @@ class Game{
   }
 }
 
-const game = new Game();
+const player1 = new Player("Luca");
+player1.addBalance(100);
+const game = new Game(player1);
 
 //ASSIGN SLOT
 document.querySelectorAll(".slot-btn").forEach((btn) => {
@@ -233,15 +238,35 @@ document.querySelectorAll(".slot-btn").forEach((btn) => {
       this.textContent = `Playing by ${game.player.name}`;
       this.disabled = true;
     }
-    game.printSlots();
+    const parentDiv = this.parentElement;
+    parentDiv.innerHTML += `<input type="radio" id="slot-${slotIndex}" name="bet-slot" value=${slotIndex}></input>`;
   });
 
+});
+
+//ASSIGN BET TO SLOT
+document.querySelectorAll(".bet-button").forEach((betBtn) => {
+  betBtn.addEventListener("click", function () {
+    const selectedSlot = document.querySelector('input[name="bet-slot"]:checked');
+
+    if (!selectedSlot) {
+      alert("Please select a slot first!"); 
+      return;  
+    }
+    const slotIndex = selectedSlot.value;
+    game.selectedSlots[slotIndex].placeBet(parseInt(this.textContent));
+    
+    const betAmountElement = selectedSlot.parentElement.querySelector('.bet-amount');
+    betAmountElement.textContent = `Bet: ${game.selectedSlots[slotIndex].bet}`;
+  });
 });
 
 //DEAL-BUTTON
 document.getElementById("deal-button").addEventListener("click", function() {
     game.dealCards();
 });
+
+
 
 /*
 
