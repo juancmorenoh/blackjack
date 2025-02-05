@@ -134,6 +134,14 @@ class Player{
     this.slots.push(slot);
     return slot;
   }
+
+  getTotalBetAmount(){
+    let totalAmount = 0;
+    this.slots.forEach( slot => {
+      totalAmount += parseInt(slot.bet);
+    });
+    return totalAmount;
+  }
 }
 
 class Slot{
@@ -149,7 +157,6 @@ class Slot{
 
   placeBet(amount){
     if(amount > this.player.balance){
-      alert("Not enough money");
       return;
     }
     this.bet = amount;
@@ -181,6 +188,7 @@ class Dealer{
 
 
 class Game{
+  started;
   deck;
   selectedSlots;
   dealer;
@@ -191,6 +199,7 @@ class Game{
     this.player = player;
     this.dealer = new Dealer();
     this.selectedSlots = [];
+    this.started = false;
   }
 
   joinSlot(slotIndex){
@@ -201,13 +210,21 @@ class Game{
     return false;
   }
 
-  dealFirstCards(){
+  checkBeforeDealingCards(){
     if(this.selectedSlots.length == 0){
       alert("Please select at least one slot");
-      return;
+      return false;
+    }else if((this.deck.cards.length < 52)){
+      alert("Not enough cards in the deck. Please reset the game");
+      return false;
+    }else if(!this.isValidBet()){
+      alert("Invalid Bet");
+      return false;
     }
-    console.log(game.selectedSlots)
+    return true;
+  }
 
+  dealFirstCards(){    
     const totalRounds = 2;
     for (let round = 0 ; round < totalRounds ; round++){
       this.selectedSlots.forEach((slot,index) =>{
@@ -218,12 +235,29 @@ class Game{
       console.log(`Dealt to Dealer: ${this.dealer.hand}`); 
     }
   }
+
+  //function to check if the total bet is less than the balance
+  isValidBet(){
+    const bet = this.player.getTotalBetAmount();
+    if (bet > this.player.balance || bet == 0){
+      return false;
+    }
+    return true;
+}
+
 }
 
 const player1 = new Player("Luca");
 player1.addBalance(50);
 const game = new Game(player1);
 document.getElementById("balance-display").innerHTML = player1.balance;
+toggleActionBtn(true);
+
+
+function toggleActionBtn(boolean){
+  document.getElementById("hit-button").disabled = boolean;
+  document.getElementById("stand-button").disabled = boolean;
+}
 
 //ASSIGN SLOT
 document.querySelectorAll(".slot-btn").forEach((btn) => {
@@ -259,43 +293,38 @@ document.querySelectorAll(".bet-button").forEach((betBtn) => {
   });
 });
 
-//function to check if the total bet is less than the balance
-function isValidBet(balance){
-  let totalBetAmount = 0;
-  player1.slots.forEach((slot) =>{
-    totalBetAmount += parseInt(slot.bet);
-    console.log(totalBetAmount);
-  })
-  if (totalBetAmount > balance){
-    return false;
-  }
-  return true;
-}
 //DEAL-BUTTON
 document.getElementById("deal-button").addEventListener("click", function() {
-  console.log(player1.balance);
-  player1.slots.forEach((slot,index) => {
-    console.log(`slot number ${index} has bet: ${slot.bet}`);
-  })
-  if(game.deck.cards.length < 52){
-    alert("Not enough cards in the deck. Please reset the game");
-    return;
-  }
-  if(!isValidBet(player1.balance)){
-    alert("Not enough money to place all bets");
-    return;
-  }
+  //if bet and slot are all good, deal cards
+  if(game.checkBeforeDealingCards()){
+    player1.slots.forEach((slot) =>{
+      slot.placeBet(slot.bet)
+    });
+    resetGame();
+    game.started = true;
+    updateDisplayBalance();
+    //deal the first round of cards (2 cards each)
+    game.dealFirstCards();
 
-  game.dealFirstCards();
-
-  document.querySelectorAll(".slot").forEach((slotDiv,index) =>{
-    const slot = game.selectedSlots[index];
-    if(slot){
-      slotDiv.querySelector(".hand-display").innerHTML = `${slot.hand}`
-    }
-  })
-  displayDealerHand();
+    document.querySelectorAll(".slot").forEach((slotDiv,index) =>{
+      const slot = game.selectedSlots[index];
+      if(slot){
+        slotDiv.querySelector(".hand-display").innerHTML = `${slot.hand}`
+      }
+    })
+    
+    toggleActionBtn(false)
+    displayDealerHand();
+    displayDealerHand();
+  }   
 });
+
+
+function displayDealerHand(){
+  const dealerHand = game.dealer.hand;
+  document.getElementById("dealer-cards").innerHTML = `${dealerHand}`
+    displayDealerHand();
+};
 
 
 function displayDealerHand(){
@@ -303,21 +332,17 @@ function displayDealerHand(){
   document.getElementById("dealer-cards").innerHTML = `${dealerHand}`
 }
 
-function updateHandDisplay(slotIndex) {
-  const slotDiv = document.querySelector(`.slot[data-slot="${slotIndex}"]`);
-  const playerSlot = game.selectedSlots[slotIndex];
 
-  if (slotDiv && playerSlot) {
-    slotDiv.querySelector(".hand-display").innerHTML = `${playerSlot.hand}`;
-  }
-}
+
 
 let currentSlotIndex = 0;
 
 //fix action when click any action && no currentSlot, nextSlot runs till dealer's hand
+
+//HIT-STAND BUTTONS
 document.querySelector(".actions").addEventListener("click", function(event) {
   const currentSlot = game.selectedSlots[currentSlotIndex];
-  if(!currentSlot){
+  if(!currentSlot && game.started){
     nextSlot();
     return;
   }
@@ -335,6 +360,23 @@ document.querySelector(".actions").addEventListener("click", function(event) {
   }
 });
 
+//function to display the dealer's hand
+function displayDealerHand(){
+  const dealerHand = game.dealer.hand;
+  document.getElementById("dealer-cards").innerHTML = `${dealerHand}`
+}
+
+//Function to display player's hand in each slot
+function updateHandDisplay(slotIndex) {
+  const slotDiv = document.querySelector(`.slot[data-slot="${slotIndex}"]`);
+  const playerSlot = game.selectedSlots[slotIndex];
+
+  if (slotDiv && playerSlot) {
+    slotDiv.querySelector(".hand-display").innerHTML = `${playerSlot.hand}`;
+  }
+}
+
+//Function to move to next slot
 function nextSlot(){
   currentSlotIndex++;
   if(currentSlotIndex < game.selectedSlots.length){
@@ -343,28 +385,57 @@ function nextSlot(){
     console.log("All players have finished. Dealer's turn!");
     game.dealer.play(game.deck);
     displayDealerHand();
+    payoutSlots();
+    updateDisplayBalance();
+    toggleActionBtn(true);
+    game.started = false;
+    currentSlotIndex = 0; // Reset to first slot
   }
 }
 
+function updateDisplayBalance(){
+  document.getElementById("balance-display").innerHTML = player1.balance;
+}
+
+function payoutSlots() {
+  const dealerScore = game.dealer.hand.score;
+
+  game.selectedSlots.forEach((slot, index) => {
+    const playerScore = slot.hand.score;
+
+    if (playerScore > 21) {
+      console.log(`Slot ${index} busted and lost the bet.`);
+      
+    } else if (dealerScore > 21) {
+      console.log(`Dealer busted! Slot ${index} wins.`);
+      player1.balance += parseInt(slot.bet) * 2; 
+    } else if (playerScore > dealerScore) {
+      console.log(`Slot ${index} wins!`);
+      player1.balance += parseInt(slot.bet)  * 2; 
+    } else if (playerScore < dealerScore) {
+      console.log(`Slot ${index} loses.`);
+      
+    } else {
+      console.log(`Slot ${index} pushes (tie). Bet returned.`);
+      player1.balance += parseInt(slot.bet) ;
+    }
+  });
+}
+
+function resetGame(){
+  document.querySelectorAll(".hand-display").forEach((elment)=>{
+    elment.innerHTML = "";
+  });
+  document.getElementById("dealer-cards").innerHTML = "";
+
+  game.selectedSlots.forEach((slot) => {
+    slot.hand = new Hand();
+  });
+  game.dealer.hand = new Hand();
+}
 /*
 
-//Function to deal first n of cards
-//modifies Deck object
-//return Object rapresenting player and dealer hands
-const dealCards = (deck, nCards) => {
-  const playersHand = [];
-  const dealersHand = [];
 
-  for (let i = 0; i < nCards; i++){
-    if(i % 2 == 0){
-      drawCard(playersHand, deck);
-    }else{
-      drawCard(dealersHand, deck);
-    }
-  }
-
-  return {playersHand, dealersHand};
-}
 
 //Function to activate or deactivate Bet Buttons
 const disableBetButtons = (boolean) => {
@@ -373,31 +444,6 @@ const disableBetButtons = (boolean) => {
   })
 }
 
-//Function takes card on 16 and stay on 17
-//modifies Deck object
-//modifies dealersHand array
-//Return dealer Score
-const dealersTurn = (dealersHand, deck) => {
-  let dealerScore = getHandScore(dealersHand);
-  
-  let dealerAces = dealersHand.filter(card => card.rank === "Ace").length;
-
-  while(dealerScore < 17 && !isBust(dealersHand)){
-    let card = drawCard(dealersHand, deck);
-    let cardValue = getCardValue(card);
-    dealerScore += cardValue;
-    if(cardValue == GAME_VALUES.ACE_VALUE){
-      dealerAces++;
-    }
-    while(dealerAces > 0 && dealerScore > GAME_VALUES.BLACKJACK_SCORE){
-      dealerScore -= GAME_VALUES.FACE_CARD_VALUE;
-      dealerAces--;
-    }
-  }
-  updateHandAndScore(dealersHand,dealerScore,dealersHandDiv,dealerScoreDiv);
-
-  return dealerScore;
-}
 
 //Function to update hand and score HTML
 const updateHandAndScore = (hand,score, handDiv, scoreDiv) =>{
