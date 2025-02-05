@@ -201,11 +201,12 @@ class Game{
     return false;
   }
 
-  dealCards(){
+  dealFirstCards(){
     if(this.selectedSlots.length == 0){
       alert("Please select at least one slot");
       return;
     }
+    console.log(game.selectedSlots)
 
     const totalRounds = 2;
     for (let round = 0 ; round < totalRounds ; round++){
@@ -254,13 +255,14 @@ document.querySelectorAll(".bet-button").forEach((betBtn) => {
   });
 });
 
+
 //DEAL-BUTTON
 document.getElementById("deal-button").addEventListener("click", function() {
   if(game.deck.cards.length < 52){
     alert("Not enough cards in the deck. Please reset the game");
     return;
   }
-  game.dealCards();
+  game.dealFirstCards();
 
   document.querySelectorAll(".slot").forEach((slotDiv,index) =>{
     const slot = game.selectedSlots[index];
@@ -268,20 +270,56 @@ document.getElementById("deal-button").addEventListener("click", function() {
       slotDiv.querySelector(".hand-display").innerHTML = `${slot.hand}`
     }
   })
-  document.getElementById("dealer-cards").innerHTML = `${game.dealer.hand}`
+  displayDealerHand();
 });
 
-document.addEventListener("click", function(event) {
+
+function displayDealerHand(){
+  const dealerHand = game.dealer.hand;
+  document.getElementById("dealer-cards").innerHTML = `${dealerHand}`
+}
+
+function updateHandDisplay(slotIndex) {
+  const slotDiv = document.querySelector(`.slot[data-slot="${slotIndex}"]`);
+  const playerSlot = game.selectedSlots[slotIndex];
+
+  if (slotDiv && playerSlot) {
+    slotDiv.querySelector(".hand-display").innerHTML = `${playerSlot.hand}`;
+  }
+}
+
+let currentSlotIndex = 0;
+
+document.querySelector(".actions").addEventListener("click", function(event) {
+  const currentSlot = game.selectedSlots[currentSlotIndex];
+  if(!currentSlot){
+    nextSlot();
+    return;
+  }
   if(event.target.id == "hit-button") {
-    game.selectedSlots[0].hit(game.deck);
-    console.log(`event: ${game.selectedSlots[0].hand}`);
+    currentSlot.hit(game.deck);
+    updateHandDisplay(currentSlotIndex);
+    if(currentSlot.hand.score > 21){
+      console.log(`slot ${currentSlotIndex} BUST`);
+      nextSlot();
+    }
   }
   if(event.target.id == "stand-button") {
-    game.dealer.play(game.deck);
-    console.log(`dealers playing...`);
-    console.log(`dealers hand: ${game.dealer.hand}`);
+    console.log(`slot ${currentSlotIndex} STAND`)
+    nextSlot();
   }
 });
+
+function nextSlot(){
+  currentSlotIndex++;
+  if(currentSlotIndex < game.selectedSlots.length){
+    console.log(`Next turn: Player in Slot ${currentSlotIndex}`);
+  }else{
+    console.log("All players have finished. Dealer's turn!");
+    game.dealer.play(game.deck);
+    displayDealerHand();
+  }
+}
 
 /*
 
