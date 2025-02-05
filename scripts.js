@@ -221,8 +221,9 @@ class Game{
 }
 
 const player1 = new Player("Luca");
-player1.addBalance(100);
+player1.addBalance(50);
 const game = new Game(player1);
+document.getElementById("balance-display").innerHTML = player1.balance;
 
 //ASSIGN SLOT
 document.querySelectorAll(".slot-btn").forEach((btn) => {
@@ -248,20 +249,43 @@ document.querySelectorAll(".bet-button").forEach((betBtn) => {
       return;  
     }
     const slotIndex = selectedSlot.value;
-    game.selectedSlots[slotIndex].placeBet(parseInt(this.textContent));
+    const valueBet = this.innerHTML;
+    game.selectedSlots[slotIndex].bet = valueBet;
+    
+    //game.selectedSlots[slotIndex].placeBet(parseInt(this.textContent));
     
     const betAmountElement = selectedSlot.parentElement.querySelector('.bet-amount');
-    betAmountElement.textContent = `Bet: ${game.selectedSlots[slotIndex].bet}`;
+    betAmountElement.textContent = `Bet: ${valueBet}`;
   });
 });
 
-
+//function to check if the total bet is less than the balance
+function isValidBet(balance){
+  let totalBetAmount = 0;
+  player1.slots.forEach((slot) =>{
+    totalBetAmount += parseInt(slot.bet);
+    console.log(totalBetAmount);
+  })
+  if (totalBetAmount > balance){
+    return false;
+  }
+  return true;
+}
 //DEAL-BUTTON
 document.getElementById("deal-button").addEventListener("click", function() {
+  console.log(player1.balance);
+  player1.slots.forEach((slot,index) => {
+    console.log(`slot number ${index} has bet: ${slot.bet}`);
+  })
   if(game.deck.cards.length < 52){
     alert("Not enough cards in the deck. Please reset the game");
     return;
   }
+  if(!isValidBet(player1.balance)){
+    alert("Not enough money to place all bets");
+    return;
+  }
+
   game.dealFirstCards();
 
   document.querySelectorAll(".slot").forEach((slotDiv,index) =>{
@@ -290,6 +314,7 @@ function updateHandDisplay(slotIndex) {
 
 let currentSlotIndex = 0;
 
+//fix action when click any action && no currentSlot, nextSlot runs till dealer's hand
 document.querySelector(".actions").addEventListener("click", function(event) {
   const currentSlot = game.selectedSlots[currentSlotIndex];
   if(!currentSlot){
