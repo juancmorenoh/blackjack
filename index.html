@@ -6,11 +6,10 @@
       <h1>Blackjack</h1>
       <div class="actions">
         <button id="deal-button">Deal Cards</button>
-        <!-- <button id="hit-button">Hit</button>
+        <button id="hit-button">Hit</button>
         <button id="stand-button">Stand</button>
-        <button id="new-game-button">Shuffle for new Game</button>
+      
       </div>
-      -->
       <br>
       <div class="dealer">
         <p>Dealer's cards:</p>
@@ -37,16 +36,19 @@
       </div>
 
       <div id="slots-container">
-        <div>
+        <div class="slot" data-slot="0">
           <button class="slot-btn" data-slot="0">Join Slot 0</button>
+          <p class="hand-display"></p>
           <span class="bet-amount"></span>
         </div>
-        <div>
+        <div class="slot" data-slot="1">
           <button class="slot-btn" data-slot="1">Join Slot 1</button>
+          <p class="hand-display"></p>
           <span class="bet-amount"></span>
         </div>
-        <div>
+        <div class="slot" data-slot="2">
           <button class="slot-btn" data-slot="2">Join Slot 2</button>
+          <p class="hand-display"></p>
           <span class="bet-amount"></span>
         </div>
         

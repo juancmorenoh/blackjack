@@ -110,7 +110,7 @@ class Hand {
   }
 
   toString() {
-    return `Hand: [${this.cards.join(", ")}] | Score: ${this.score}`;
+    return `[${this.cards.join(", ")}] | Score: ${this.score}`;
   }
 }
 
@@ -172,7 +172,7 @@ class Dealer{
     this.hand = new Hand();
   }
 
-  play(){
+  play(deck){
     while(this.hand.score < 17){
       this.hand.addCard(deck.dealCard());
     }
@@ -201,11 +201,6 @@ class Game{
     return false;
   }
 
-  printSlots(){
-    this.selectedSlots.forEach((slot, index) => {
-      console.log(`Slot ${index}: ${slot.hand}`);
-    });
-  }
   dealCards(){
     if(this.selectedSlots.length == 0){
       alert("Please select at least one slot");
@@ -218,9 +213,8 @@ class Game{
         slot.hit(this.deck);
         console.log(`Dealt to Slot ${index}: ${slot.hand}`);
       });
-      this.dealer.hand.addCard(this.deck.dealCard());
-      console.log(`Dealt to Dealer: ${this.dealer.hand}`);
-         
+      this.dealer.hand.addCard(this.deck.dealCard()); 
+      console.log(`Dealt to Dealer: ${this.dealer.hand}`); 
     }
   }
 }
@@ -262,10 +256,32 @@ document.querySelectorAll(".bet-button").forEach((betBtn) => {
 
 //DEAL-BUTTON
 document.getElementById("deal-button").addEventListener("click", function() {
-    game.dealCards();
+  if(game.deck.cards.length < 52){
+    alert("Not enough cards in the deck. Please reset the game");
+    return;
+  }
+  game.dealCards();
+
+  document.querySelectorAll(".slot").forEach((slotDiv,index) =>{
+    const slot = game.selectedSlots[index];
+    if(slot){
+      slotDiv.querySelector(".hand-display").innerHTML = `${slot.hand}`
+    }
+  })
+  document.getElementById("dealer-cards").innerHTML = `${game.dealer.hand}`
 });
 
-
+document.addEventListener("click", function(event) {
+  if(event.target.id == "hit-button") {
+    game.selectedSlots[0].hit(game.deck);
+    console.log(`event: ${game.selectedSlots[0].hand}`);
+  }
+  if(event.target.id == "stand-button") {
+    game.dealer.play(game.deck);
+    console.log(`dealers playing...`);
+    console.log(`dealers hand: ${game.dealer.hand}`);
+  }
+});
 
 /*
 
