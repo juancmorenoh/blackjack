@@ -117,33 +117,19 @@ class Hand {
 class Player{
   balance;
   name;
-  slots;
 
   constructor(name){
     this.balance = 0;
     this.name = name;
-    this.slots = [];
   }
 
   addBalance(amount){
     this.balance += amount;
   }
 
-  addSlot(){
-    const slot = new Slot(this);
-    this.slots.push(slot);
-    return slot;
-  }
-
-  removeSlot(slotIndex){
-    if (this.slots[slotIndex]) {
-      this.slots.splice(slotIndex, 1);
-    }
-  }
-
-  getTotalBetAmount(){
+  getTotalBetAmount(slots){
     let totalAmount = 0;
-    this.slots.forEach( slot => {
+    slots.filter(slot => slot !== null).forEach(slot => {
       totalAmount += parseInt(slot.bet);
     });
     return totalAmount;
@@ -200,11 +186,11 @@ class Game{
   dealer;
   player;
 
-  constructor(player){
+  constructor(player, numSlots){
     this.deck = new Deck(6);  
     this.player = player;
     this.dealer = new Dealer();
-    this.selectedSlots = [];
+    this.selectedSlots = new Array(numSlots).fill(null);
     this.started = false;
   }
 
@@ -218,30 +204,31 @@ class Game{
   }
 */
 
-joinSlot(slotIndex) {
-  if (this.selectedSlots[slotIndex]) {
-    // Remove slot if it already exists
-    //reset bet to 0 before deleting slot
-    this.selectedSlots[slotIndex].bet = 0;
-    delete this.selectedSlots[slotIndex];
-    this.player.removeSlot(slotIndex);
-    return false;
-  } else {
-    // Add slot if it's not already selected
-    this.selectedSlots[slotIndex] = this.player.addSlot();
-    return true;
+  joinSlot(slotIndex) {
+    if (this.selectedSlots[slotIndex] == null) {
+      console.log("Creating slot")
+      // Add slot if null
+      this.selectedSlots[slotIndex] = new Slot(this.player);
+      return true;
+    } else {
+      // Remove slot if it already exists
+      //reset bet to 0 before deleting slot
+      console.log("Removing slot")
+      //this.selectedSlots[slotIndex].bet = 0;
+      this.selectedSlots[slotIndex] = null;
+      return false;
+    }
   }
-}
 
   checkBeforeDealingCards(){
-    if(this.selectedSlots.length == 0){
+    if(this.selectedSlots.filter(slot => slot !== null) > 0){
       alert("Please select at least one slot");
       return false;
     }else if((this.deck.cards.length < 52)){
       alert("Not enough cards in the deck. Please reset the game");
       return false;
     }else if(!this.isValidBet()){
-      alert("Invalid Bet");
+      alert("Not enough money");
       return false;
     }else if(!this.allSelectedSlotBet()){
       alert("Place a bet in all slots");
@@ -254,9 +241,12 @@ joinSlot(slotIndex) {
     const totalRounds = 2;
     for (let round = 0 ; round < totalRounds ; round++){
       this.selectedSlots.forEach((slot,index) =>{
-        slot.hit(this.deck);
-        console.log(`Dealt to Slot ${index}: ${slot.hand}`);
-      });
+        if(slot != null){
+          slot.hit(this.deck);
+          console.log(`Dealt to Slot ${index}: ${slot.hand}`);
+        }
+      })
+      
       this.dealer.hand.addCard(this.deck.dealCard()); 
       console.log(`Dealt to Dealer: ${this.dealer.hand}`); 
     }
@@ -264,8 +254,8 @@ joinSlot(slotIndex) {
 
   //function to check if the total bet is less than the balance
   isValidBet(){
-    const bet = this.player.getTotalBetAmount();
-    if (bet > this.player.balance || bet == 0){
+    const bet = this.player.getTotalBetAmount(this.selectedSlots);
+    if (bet > this.player.balance){
       return false;
     }
     return true;
@@ -273,13 +263,17 @@ joinSlot(slotIndex) {
 
   //function to check if all slots have a bet
   allSelectedSlotBet(){
-    return this.selectedSlots.every(slot => slot.bet > 0);
+    return this.selectedSlots.filter(slot => slot !== null).every(slot => slot.bet > 0);
+  }
+
+  isPlayerPlaying(){
+    
   }
 }
 
 const player1 = new Player("Luca");
 player1.addBalance(50);
-const game = new Game(player1);
+const game = new Game(player1,3);
 document.getElementById("balance-display").innerHTML = player1.balance;
 toggleActionBtn(true);
 
@@ -309,7 +303,7 @@ document.querySelectorAll(".slot-btn").forEach((btn) => {
       if(radio) radio.remove();
 
       
-      
+      //remove bet from HTML
       const betAmountElement = parentDiv.querySelector('.bet-amount');
       if (betAmountElement) betAmountElement.textContent = "";
 
@@ -335,8 +329,6 @@ document.querySelectorAll(".bet-button").forEach((betBtn) => {
     const valueBet = this.innerHTML;
     game.selectedSlots[slotIndex].bet = valueBet;
     
-    //game.selectedSlots[slotIndex].placeBet(parseInt(this.textContent));
-    
     const betAmountElement = selectedSlot.parentElement.querySelector('.bet-amount');
     betAmountElement.textContent = `Bet: ${valueBet}`;
   });
@@ -344,11 +336,16 @@ document.querySelectorAll(".bet-button").forEach((betBtn) => {
 
 //DEAL-BUTTON
 document.getElementById("deal-button").addEventListener("click", function() {
+  
   //if bet and slot are all good, deal cards
   if(game.checkBeforeDealingCards()){
-    player1.slots.forEach((slot) =>{
+
+    //place bet of all not null slots
+    game.selectedSlots.filter(slot => slot != null).forEach(slot =>{
       slot.placeBet(slot.bet)
     });
+
+    console.log(`Total bet amount is: ${game.player.getTotalBetAmount(game.selectedSlots)}`);
     resetGame();
     game.started = true;
     updateDisplayBalance();
@@ -357,13 +354,12 @@ document.getElementById("deal-button").addEventListener("click", function() {
 
     document.querySelectorAll(".slot").forEach((slotDiv,index) =>{
       const slot = game.selectedSlots[index];
-      if(slot){
+      if(slot != null){
         slotDiv.querySelector(".hand-display").innerHTML = `${slot.hand}`
       }
     })
     
     toggleActionBtn(false)
-    displayDealerHand();
     displayDealerHand();
   }   
 });
@@ -386,7 +382,7 @@ function displayDealerHand(){
 
 let currentSlotIndex = 0;
 
-//fix action when click any action && no currentSlot, nextSlot runs till dealer's hand
+
 
 //HIT-STAND BUTTONS
 document.querySelector(".actions").addEventListener("click", function(event) {
@@ -428,9 +424,13 @@ function updateHandDisplay(slotIndex) {
 //Function to move to next slot
 function nextSlot(){
   currentSlotIndex++;
+  while (currentSlotIndex < game.selectedSlots.length && game.selectedSlots[currentSlotIndex] === null) {
+    currentSlotIndex++;
+  }
   if(currentSlotIndex < game.selectedSlots.length){
     console.log(`Next turn: Player in Slot ${currentSlotIndex}`);
   }else{
+    (currentSlotIndex == game.selectedSlots.length)
     console.log("All players have finished. Dealer's turn!");
     game.dealer.play(game.deck);
     displayDealerHand();
@@ -438,7 +438,7 @@ function nextSlot(){
     updateDisplayBalance();
     toggleActionBtn(true);
     game.started = false;
-    currentSlotIndex = 0; // Reset to first slot
+    currentSlotIndex = 0;
   }
 }
 
@@ -450,6 +450,7 @@ function payoutSlots() {
   const dealerScore = game.dealer.hand.score;
 
   game.selectedSlots.forEach((slot, index) => {
+    if (slot == null) return;
     const playerScore = slot.hand.score;
 
     if (playerScore > 21) {
@@ -477,7 +478,7 @@ function resetGame(){
   });
   document.getElementById("dealer-cards").innerHTML = "";
 
-  game.selectedSlots.forEach((slot) => {
+  game.selectedSlots.filter(slot => slot!= null).forEach((slot) => {
     slot.hand = new Hand();
   });
   game.dealer.hand = new Hand();
