@@ -243,6 +243,9 @@ joinSlot(slotIndex) {
     }else if(!this.isValidBet()){
       alert("Invalid Bet");
       return false;
+    }else if(!this.allSelectedSlotBet()){
+      alert("Place a bet in all slots");
+      return false;
     }
     return true;
   }
@@ -266,8 +269,12 @@ joinSlot(slotIndex) {
       return false;
     }
     return true;
-}
+  }
 
+  //function to check if all slots have a bet
+  allSelectedSlotBet(){
+    return this.selectedSlots.every(slot => slot.bet > 0);
+  }
 }
 
 const player1 = new Player("Luca");
