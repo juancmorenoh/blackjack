@@ -135,6 +135,12 @@ class Player{
     return slot;
   }
 
+  removeSlot(slotIndex){
+    if (this.slots[slotIndex]) {
+      this.slots.splice(slotIndex, 1);
+    }
+  }
+
   getTotalBetAmount(){
     let totalAmount = 0;
     this.slots.forEach( slot => {
@@ -202,6 +208,7 @@ class Game{
     this.started = false;
   }
 
+  /*
   joinSlot(slotIndex){
     if(!this.selectedSlots[slotIndex]){
       this.selectedSlots[slotIndex] = this.player.addSlot();
@@ -209,6 +216,22 @@ class Game{
     }
     return false;
   }
+*/
+
+joinSlot(slotIndex) {
+  if (this.selectedSlots[slotIndex]) {
+    // Remove slot if it already exists
+    //reset bet to 0 before deleting slot
+    this.selectedSlots[slotIndex].bet = 0;
+    delete this.selectedSlots[slotIndex];
+    this.player.removeSlot(slotIndex);
+    return false;
+  } else {
+    // Add slot if it's not already selected
+    this.selectedSlots[slotIndex] = this.player.addSlot();
+    return true;
+  }
+}
 
   checkBeforeDealingCards(){
     if(this.selectedSlots.length == 0){
@@ -262,13 +285,32 @@ function toggleActionBtn(boolean){
 //ASSIGN SLOT
 document.querySelectorAll(".slot-btn").forEach((btn) => {
   btn.addEventListener("click", function() {
+    console.log("clicked");
     const slotIndex = this.getAttribute("data-slot");
-    if (game.joinSlot(slotIndex)) {
-      this.textContent = `Playing by ${game.player.name}`;
-      this.disabled = true;
-    }
     const parentDiv = this.parentElement;
-    parentDiv.innerHTML += `<input type="radio" id="slot-${slotIndex}" name="bet-slot" value=${slotIndex}></input>`;
+
+    if(game.joinSlot(slotIndex)) {
+        console.log(`slot ${slotIndex} created`);
+        this.textContent = `Playing by ${game.player.name}`;
+        //using innetHTML override the listener when changing is content, insertAjacentHTML instead
+        this.insertAdjacentHTML("afterend", `<input type="radio" id="slot-${slotIndex}" name="bet-slot" value=${slotIndex}>`);
+      
+    }else{
+      console.log(`slot ${slotIndex} removed`);
+      //remove radio input
+      const radio = parentDiv.querySelector(`input[id="slot-${slotIndex}"]`);
+      if(radio) radio.remove();
+
+      
+      
+      const betAmountElement = parentDiv.querySelector('.bet-amount');
+      if (betAmountElement) betAmountElement.textContent = "";
+
+      // If already selected, unselect it
+      //game.player.removeSlot(slotIndex) // Remove from selected slots
+      this.innerHTML = `Join Slot ${slotIndex}`; // Reset button text
+      
+    }  
   });
 
 });
