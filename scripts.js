@@ -221,7 +221,7 @@ class Game{
   }
 
   checkBeforeDealingCards(){
-    if(this.selectedSlots.filter(slot => slot !== null) > 0){
+    if(this.selectedSlots.filter(slot => slot != null).length == 0){
       alert("Please select at least one slot");
       return false;
     }else if((this.deck.cards.length < 52)){
@@ -287,6 +287,10 @@ function toggleActionBtn(boolean){
 document.querySelectorAll(".slot-btn").forEach((btn) => {
   btn.addEventListener("click", function() {
     console.log("clicked");
+    if(game.started){
+      alert("Cannot remove or add slots mid game");
+      return;
+    }
     const slotIndex = this.getAttribute("data-slot");
     const parentDiv = this.parentElement;
 
@@ -307,8 +311,8 @@ document.querySelectorAll(".slot-btn").forEach((btn) => {
       const betAmountElement = parentDiv.querySelector('.bet-amount');
       if (betAmountElement) betAmountElement.textContent = "";
 
-      // If already selected, unselect it
-      //game.player.removeSlot(slotIndex) // Remove from selected slots
+      const handDiv = parentDiv.querySelector('.hand-display');
+      if (handDiv) handDiv.textContent = "";
       this.innerHTML = `Join Slot ${slotIndex}`; // Reset button text
       
     }  
@@ -319,6 +323,10 @@ document.querySelectorAll(".slot-btn").forEach((btn) => {
 //ASSIGN BET TO SLOT
 document.querySelectorAll(".bet-button").forEach((betBtn) => {
   betBtn.addEventListener("click", function () {
+    if(game.started){
+      alert("Cannot change your bet mid game");
+      return;
+    }
     const selectedSlot = document.querySelector('input[name="bet-slot"]:checked');
 
     if (!selectedSlot) {
@@ -336,7 +344,11 @@ document.querySelectorAll(".bet-button").forEach((betBtn) => {
 
 //DEAL-BUTTON
 document.getElementById("deal-button").addEventListener("click", function() {
-  
+  console.log(game.selectedSlots)
+  if(game.started){
+    alert("End the game before starting a new one!");
+    return;
+  }
   //if bet and slot are all good, deal cards
   if(game.checkBeforeDealingCards()){
 
@@ -394,8 +406,11 @@ document.querySelector(".actions").addEventListener("click", function(event) {
   if(event.target.id == "hit-button") {
     currentSlot.hit(game.deck);
     updateHandDisplay(currentSlotIndex);
-    if(currentSlot.hand.score > 21){
-      console.log(`slot ${currentSlotIndex} BUST`);
+    if (currentSlot.hand.score > 21) {  
+      console.log(`Slot ${currentSlotIndex} BUST!`);
+      nextSlot();
+    } else if (currentSlot.hand.score === 21) {  
+      console.log(`Slot ${currentSlotIndex} STAND`);
       nextSlot();
     }
   }
