@@ -157,9 +157,6 @@ class Slot{
     this.player.balance -= amount;
   }
 
-  //split()
-  //double()
-  //stand()
 
   hit(deck){
     this.hand.addCard(deck.dealCard());
@@ -384,8 +381,8 @@ document.getElementById("deal-button").addEventListener("click", function() {
         console.log("All players got Blackjack! Game ends.");
         game.started = false;
         toggleActionBtn(true);
-    }
-    }
+      }
+    } 
   }   
 });
 
@@ -412,12 +409,23 @@ let currentSlotIndex = 0;
 //HIT-STAND BUTTONS
 document.querySelector(".actions").addEventListener("click", function(event) {
   const currentSlot = game.selectedSlots[currentSlotIndex];
-  
+
+
+  //First slot is mostly skipped if not manuallt handled
+  //Most logic is in NextTurn() which is only called after
+  //remove
+  if(currentSlot){
+    highlightCurrentSlot();
+  }
+  //remove
+
+
   if((!currentSlot || currentSlot.status == "inactive") && game.started){
-    console.log("UNDERSTAND WHY");
+    console.log("THIS FIRST HAND IS EMPTY");
     nextSlot();
     return;
   }
+  
   if(event.target.id == "hit-button") {
     currentSlot.hit(game.deck);
     updateHandDisplay(currentSlotIndex);
@@ -457,6 +465,9 @@ function nextSlot(){
   while (currentSlotIndex < game.selectedSlots.length && (game.selectedSlots[currentSlotIndex] === null|| game.selectedSlots[currentSlotIndex].status == "inactive")) {
     currentSlotIndex++;
   }
+  //remove
+  highlightCurrentSlot();
+  //remove
   if(currentSlotIndex < game.selectedSlots.length){
     console.log(`Next turn: Player in Slot ${currentSlotIndex}`);
   }else{
@@ -470,6 +481,7 @@ function nextSlot(){
     game.started = false;
     currentSlotIndex = 0;
   }
+  
 }
 
 function updateDisplayBalance(){
@@ -568,7 +580,26 @@ function dealerHasBlackjack() {
     }
 }
 
+function createDoubleButton(){
+  //Create button double
+  const doubleButton = document.createElement("button");
+  doubleButton.innerHTML = "Double";
+  doubleButton.id = `double-btn-${slotIndex}`;
 
+  //insert in actions Div
+  document.querySelector(".actions").appendChild(doubleButton);
+}
+
+
+
+
+//REMOVE
+function highlightCurrentSlot() {
+  document.querySelectorAll(".slot").forEach(slot => slot.classList.remove("active-slot"));
+  const activeSlot = document.querySelector(`.slot[data-slot="${currentSlotIndex}"]`);
+  if (activeSlot) activeSlot.classList.add("active-slot"); 
+}
+//REMOVE
 
 //REMEBER TO ACTIVATE ALL PLAYING SLOTS
 /*
