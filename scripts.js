@@ -140,11 +140,13 @@ class Slot{
   hand;
   player;
   bet;
+  status;
 
   constructor(player){
     this.hand = new Hand();
     this.player = player;
     this.bet = 0;
+    this.status = "active";
   }
 
   placeBet(amount){
@@ -265,17 +267,6 @@ class Game{
   allSelectedSlotBet(){
     return this.selectedSlots.filter(slot => slot !== null).every(slot => slot.bet > 0);
   }
-
-  payAndRemoveBlackJack(){
-    this.selectedSlots.forEach(slot =>{
-      if(slot == null) return;
-      if(slot.hand.isBlackJack() && !this.dealer.hand.isBlackJack){
-        slot.player.addBalance(slot.bet * 1.5);
-        console.log(`This slot wins blackjack! ${slot.bet * 1.5} added to balance.`);
-        slot = null;
-      }
-    })
-  }
 }
 
 const player1 = new Player("Luca");
@@ -388,6 +379,12 @@ document.getElementById("deal-button").addEventListener("click", function() {
     }else{
       //Pay slots with BJ and set them to null
       handlePlayersBj();
+      //IF All slots had Bj, end game
+      if (game.selectedSlots.every(slot => slot == null || slot.status == "inactive")) {
+        console.log("All players got Blackjack! Game ends.");
+        game.started = false;
+        toggleActionBtn(true);
+    }
     }
   }   
 });
@@ -415,7 +412,9 @@ let currentSlotIndex = 0;
 //HIT-STAND BUTTONS
 document.querySelector(".actions").addEventListener("click", function(event) {
   const currentSlot = game.selectedSlots[currentSlotIndex];
-  if(!currentSlot && game.started){
+  
+  if((!currentSlot || currentSlot.status == "inactive") && game.started){
+    console.log("UNDERSTAND WHY");
     nextSlot();
     return;
   }
@@ -455,7 +454,7 @@ function updateHandDisplay(slotIndex) {
 //Function to move to next slot
 function nextSlot(){
   currentSlotIndex++;
-  while (currentSlotIndex < game.selectedSlots.length && game.selectedSlots[currentSlotIndex] === null) {
+  while (currentSlotIndex < game.selectedSlots.length && (game.selectedSlots[currentSlotIndex] === null|| game.selectedSlots[currentSlotIndex].status == "inactive")) {
     currentSlotIndex++;
   }
   if(currentSlotIndex < game.selectedSlots.length){
@@ -481,7 +480,7 @@ function payoutSlots() {
   const dealerScore = game.dealer.hand.score;
 
   game.selectedSlots.forEach((slot, index) => {
-    if (slot == null) return;
+    if (slot == null || slot.status == "inactive") return;
     const playerScore = slot.hand.score;
 
     if (playerScore > 21) {
@@ -510,6 +509,7 @@ function resetGame(){
   document.getElementById("dealer-cards").innerHTML = "";
 
   game.selectedSlots.filter(slot => slot!= null).forEach((slot) => {
+    slot.status = "active";
     slot.hand = new Hand();
   });
   game.dealer.hand = new Hand();
@@ -542,8 +542,7 @@ function handlePlayersBj(){
       let slot = game.selectedSlots[index];
       console.log(`Slot ${index} wins with Blackjack! Paying 1.5x the bet.`);
       slot.player.addBalance(slot.bet * 1.5); // 1.5x payout
-      slot.bet = 0;
-      game.selectedSlots[index] = null; // Remove slot from play
+      game.selectedSlots[index].status = "inactive"; // Remove slot from play
     });
   }
 }
@@ -564,11 +563,14 @@ function dealerHasBlackjack() {
         let slot = game.selectedSlots[index];
         console.log(`slot ${index} has BJ, and Ties`);
         slot.player.addBalance(slot.bet); // Bet returned
-        slot.bet = 0;
-        game.selectedSlots[index] = null;
+        game.selectedSlots[index].status = "inactive";
       });
     }
 }
+
+
+
+//REMEBER TO ACTIVATE ALL PLAYING SLOTS
 /*
 
 
