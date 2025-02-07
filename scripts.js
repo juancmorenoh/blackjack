@@ -266,8 +266,15 @@ class Game{
     return this.selectedSlots.filter(slot => slot !== null).every(slot => slot.bet > 0);
   }
 
-  isPlayerPlaying(){
-    
+  payAndRemoveBlackJack(){
+    this.selectedSlots.forEach(slot =>{
+      if(slot == null) return;
+      if(slot.hand.isBlackJack() && !this.dealer.hand.isBlackJack){
+        slot.player.addBalance(slot.bet * 1.5);
+        console.log(`This slot wins blackjack! ${slot.bet * 1.5} added to balance.`);
+        slot = null;
+      }
+    })
   }
 }
 
@@ -373,6 +380,15 @@ document.getElementById("deal-button").addEventListener("click", function() {
     
     toggleActionBtn(false)
     displayDealerHand();
+
+    if (game.dealer.hand.score == 21){
+      //Push with slots that have BJ
+      //End game if no player has it
+      dealerHasBlackjack();
+    }else{
+      //Pay slots with BJ and set them to null
+      handlePlayersBj();
+    }
   }   
 });
 
@@ -497,6 +513,61 @@ function resetGame(){
     slot.hand = new Hand();
   });
   game.dealer.hand = new Hand();
+}
+
+
+//Logic to be immproved and remove redundant checks
+//FUNCTIONS TO HANDLE BLACKJACKS
+
+//Return an Array of Indexes of slots with BJ
+function getIndexesBj(slots) {
+  let indexWithBj = [];
+  slots.forEach((slot, index) => {
+    if (slot == null) return;
+    if (slot.hand.score === 21 && slot.hand.cards.length === 2) {
+      indexWithBj.push(index);
+    }
+  });
+  return indexWithBj;
+}
+
+
+//Pays slots with BJ when dealer Doesn't
+function handlePlayersBj(){
+  let indexesWithBj = getIndexesBj(game.selectedSlots);
+  if (indexesWithBj.length > 0) {
+    console.log("Some players have Blackjack, but the dealer does not.");
+
+    indexesWithBj.forEach(index => {
+      let slot = game.selectedSlots[index];
+      console.log(`Slot ${index} wins with Blackjack! Paying 1.5x the bet.`);
+      slot.player.addBalance(slot.bet * 1.5); // 1.5x payout
+      slot.bet = 0;
+      game.selectedSlots[index] = null; // Remove slot from play
+    });
+  }
+}
+//Dealer has BJ
+//Push with slots that have BJ
+//End game if nonone has it
+function dealerHasBlackjack() {
+    console.log("Dealer has BJ")
+    let indexesWithBj = getIndexesBj(game.selectedSlots);
+    //If no other player has BJ, end game
+    if(indexesWithBj.length == 0){
+      console.log("No other player has Blackjack, Dealer wins, end game");
+      toggleActionBtn(true);
+      game.started = false;
+      currentSlotIndex = 0;
+    }else{
+      bjIndices.forEach(index => {
+        let slot = game.selectedSlots[index];
+        console.log(`slot ${index} has BJ, and Ties`);
+        slot.player.addBalance(slot.bet); // Bet returned
+        slot.bet = 0;
+        game.selectedSlots[index] = null;
+      });
+    }
 }
 /*
 
