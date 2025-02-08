@@ -146,7 +146,7 @@ class Slot{
     this.hand = new Hand();
     this.player = player;
     this.bet = 0;
-    this.status = "active";
+    this.status = "inactive";
   }
 
   placeBet(amount){
@@ -267,7 +267,7 @@ class Game{
 }
 
 const player1 = new Player("Luca");
-player1.addBalance(50);
+player1.addBalance(100);
 const game = new Game(player1,3);
 document.getElementById("balance-display").innerHTML = player1.balance;
 toggleActionBtn(true);
@@ -337,6 +337,8 @@ document.querySelectorAll(".bet-button").forEach((betBtn) => {
   });
 });
 
+
+
 //DEAL-BUTTON
 document.getElementById("deal-button").addEventListener("click", function() {
   console.log(game.selectedSlots)
@@ -354,8 +356,10 @@ document.getElementById("deal-button").addEventListener("click", function() {
 
     console.log(`Total bet amount is: ${game.player.getTotalBetAmount(game.selectedSlots)}`);
     resetGame();
+    setUpCurrentSlot(game.currentSlotIndex);
     game.started = true;
     updateDisplayBalance();
+
     //deal the first round of cards (2 cards each)
     game.dealFirstCards();
 
@@ -400,49 +404,71 @@ function displayDealerHand(){
 }
 
 
-
-
-let currentSlotIndex = 0;
-
-
-
 //HIT-STAND BUTTONS
 document.querySelector(".actions").addEventListener("click", function(event) {
-  const currentSlot = game.selectedSlots[currentSlotIndex];
-
-
-  //First slot is mostly skipped if not manuallt handled
+  /* const currentSlot = game.selectedSlots[currentSlotIndex];
+  highlightCurrentSlot(); */
+  /* 
+//First slot is mostly skipped if not manuallt handled
   //Most logic is in NextTurn() which is only called after
+  //Manages 1st slot
   //remove
-  if(currentSlot){
+  if(currentSlot && currentSlot.status == "active"){
     highlightCurrentSlot();
+    if(currentSlot.hand.score > 8 &&
+      currentSlot.hand.score < 12 && 
+      currentSlot.hand.cards.length == 2 &&
+      currentSlotIndex == 0
+    ){//IF DOUBLE IS ON 1SR SLOT, IT WILL REFALL ON THIS LOOP AND CREATE A NEW BUTTON BEFORE THE HAND LENGTH == 3
+      console.log("Hand length is " + currentSlot.hand.cards.length)
+      console.log(`Slot ${currentSlotIndex} CAN DOUBLE`);
+      createDoubleButton();
+    }
   }
-  //remove
+  //remove */
 
-
-  if((!currentSlot || currentSlot.status == "inactive") && game.started){
+  /* if((!currentSlot || currentSlot.status == "inactive") && game.started){
     console.log("THIS FIRST HAND IS EMPTY");
     nextSlot();
     return;
-  }
+  } */
   
   if(event.target.id == "hit-button") {
-    currentSlot.hit(game.deck);
-    updateHandDisplay(currentSlotIndex);
-    if (currentSlot.hand.score > 21) {  
-      console.log(`Slot ${currentSlotIndex} BUST!`);
-      nextSlot();
-    } else if (currentSlot.hand.score === 21) {  
-      console.log(`Slot ${currentSlotIndex} STAND`);
-      nextSlot();
-    }
+    handlesHit(game.currentSlotIndex);
   }
   if(event.target.id == "stand-button") {
-    console.log(`slot ${currentSlotIndex} STAND`)
+    console.log(`slot ${game.currentSlotIndex} STAND`)
     nextSlot();
   }
 });
 
+//FUNCTION TO PROPERLY SET UP The given
+//Add buttons, hightlite etc...
+//takes the index of the slot as parameter and
+function setUpCurrentSlot(currentSlotIndex){
+  console.log(`Next turn: Player in Slot ${game.currentSlotIndex}`);
+  const currentSlot = game.selectedSlots[currentSlotIndex];
+  highlightCurrentSlot(currentSlotIndex);
+  if(currentSlot.hand.score > 8 &&
+    currentSlot.hand.score < 12 && 
+    currentSlot.hand.cards.length == 2){
+      console.log(`Current slot can double`)
+      createDoubleButton(currentSlotIndex);
+  }
+}
+
+function handlesHit(currentSlotIndex){
+  const currentSlot = game.selectedSlots[currentSlotIndex];
+  currentSlot.hit(game.deck);
+  updateHandDisplay(currentSlotIndex);
+  if (currentSlot.hand.score > 21) {  
+    console.log(`Slot ${currentSlotIndex} BUST!`);    
+    nextSlot();
+  } else if (currentSlot.hand.score === 21) {  
+    console.log(`Slot ${currentSlotIndex} AUTOMATICALLY STAND`);      
+    nextSlot();
+  }
+}
 //function to display the dealer's hand
 function displayDealerHand(){
   const dealerHand = game.dealer.hand;
@@ -461,17 +487,18 @@ function updateHandDisplay(slotIndex) {
 
 //Function to move to next slot
 function nextSlot(){
-  currentSlotIndex++;
-  while (currentSlotIndex < game.selectedSlots.length && (game.selectedSlots[currentSlotIndex] === null|| game.selectedSlots[currentSlotIndex].status == "inactive")) {
-    currentSlotIndex++;
-  }
-  //remove
-  highlightCurrentSlot();
-  //remove
-  if(currentSlotIndex < game.selectedSlots.length){
-    console.log(`Next turn: Player in Slot ${currentSlotIndex}`);
+  //remove first element of the array of playing indexes
+  const removedIndex = game.playingIndexes.shift();
+  console.log(`NextSlot() was just called and it just removed slot at index ${removedIndex}`);
+  console.log(`Remaining slots : ${game.playingIndexes.length}`)
+  if(game.playingIndexes.length > 0) {
+    game.currentSlotIndex = game.playingIndexes[0];
+    setUpCurrentSlot(game.currentSlotIndex);
   }else{
-    (currentSlotIndex == game.selectedSlots.length)
+    //remove red marking from last slot// game is ended
+    const slotDiv = document.querySelector(`.slot[data-slot="${game.currentSlotIndex}"]`);
+    if(slotDiv) slotDiv.classList.remove("active-slot");
+
     console.log("All players have finished. Dealer's turn!");
     game.dealer.play(game.deck);
     displayDealerHand();
@@ -479,9 +506,7 @@ function nextSlot(){
     updateDisplayBalance();
     toggleActionBtn(true);
     game.started = false;
-    currentSlotIndex = 0;
   }
-  
 }
 
 function updateDisplayBalance(){
@@ -525,6 +550,8 @@ function resetGame(){
     slot.hand = new Hand();
   });
   game.dealer.hand = new Hand();
+  game.playingIndexes = getPlayingIndexes(game.selectedSlots);
+  game.currentSlotIndex = game.playingIndexes[0];
 }
 
 
@@ -543,6 +570,14 @@ function getIndexesBj(slots) {
   return indexWithBj;
 }
 
+function getPlayingIndexes(slots){
+  let playingIndexes = [];
+  slots.forEach((slot, index) => {
+    if (slot == null || slot.status == "inactive") return;
+    playingIndexes.push(index);
+  });
+  return playingIndexes;
+}
 
 //Pays slots with BJ when dealer Doesn't
 function handlePlayersBj(){
@@ -569,7 +604,7 @@ function dealerHasBlackjack() {
       console.log("No other player has Blackjack, Dealer wins, end game");
       toggleActionBtn(true);
       game.started = false;
-      currentSlotIndex = 0;
+      //currentSlotIndex = game.playingIndexes[0];
     }else{
       bjIndices.forEach(index => {
         let slot = game.selectedSlots[index];
@@ -580,24 +615,25 @@ function dealerHasBlackjack() {
     }
 }
 
-function createDoubleButton(){
+function createDoubleButton(currentSlotIndex){
   //Create button double
   const doubleButton = document.createElement("button");
   doubleButton.innerHTML = "Double";
-  doubleButton.id = `double-btn-${slotIndex}`;
+  doubleButton.id = `double-btn-${currentSlotIndex}`;
 
-  //insert in actions Div
-  document.querySelector(".actions").appendChild(doubleButton);
+  //insert in new Buttons div
+  document.getElementById("new-buttons").appendChild(doubleButton);
 }
 
 
 
 
 //REMOVE
-function highlightCurrentSlot() {
-  document.querySelectorAll(".slot").forEach(slot => slot.classList.remove("active-slot"));
-  const activeSlot = document.querySelector(`.slot[data-slot="${currentSlotIndex}"]`);
-  if (activeSlot) activeSlot.classList.add("active-slot"); 
+function highlightCurrentSlot(currentSlotIndex) {
+    document.querySelectorAll(".slot").forEach(slot => slot.classList.remove("active-slot"));
+    const activeSlot = document.querySelector(`.slot[data-slot="${currentSlotIndex}"]`);
+    if (activeSlot) activeSlot.classList.add("active-slot"); 
+  
 }
 //REMOVE
 
