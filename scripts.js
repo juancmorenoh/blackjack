@@ -356,12 +356,13 @@ document.getElementById("deal-button").addEventListener("click", function() {
 
     console.log(`Total bet amount is: ${game.player.getTotalBetAmount(game.selectedSlots)}`);
     resetGame();
-    setUpCurrentSlot(game.currentSlotIndex);
     game.started = true;
     updateDisplayBalance();
 
     //deal the first round of cards (2 cards each)
     game.dealFirstCards();
+
+    setUpCurrentSlot(game.currentSlotIndex);
 
     document.querySelectorAll(".slot").forEach((slotDiv,index) =>{
       const slot = game.selectedSlots[index];
@@ -377,6 +378,8 @@ document.getElementById("deal-button").addEventListener("click", function() {
       //Push with slots that have BJ
       //End game if no player has it
       dealerHasBlackjack();
+      //NEED TO HANDLE IN CASE 1 SLOT IS OPEN AND BOTH DEALER AND SLOT HAVE BJ
+      //GAME DOESN'T END IF DEALER AND ALL PLAYING SLOT HAVE BJ
     }else{
       //Pay slots with BJ and set them to null
       handlePlayersBj();
@@ -385,6 +388,10 @@ document.getElementById("deal-button").addEventListener("click", function() {
         console.log("All players got Blackjack! Game ends.");
         game.started = false;
         toggleActionBtn(true);
+        //verymuch repeated code//create a function endgame()
+        //remove red marking from last slot// game is ended
+        const slotDiv = document.querySelector(`.slot[data-slot="${game.currentSlotIndex}"]`);
+        if(slotDiv) slotDiv.classList.remove("active-slot");
       }
     } 
   }   
@@ -404,34 +411,8 @@ function displayDealerHand(){
 }
 
 
-//HIT-STAND BUTTONS
+//HIT-STAND-DOUBLE BUTTONS
 document.querySelector(".actions").addEventListener("click", function(event) {
-  /* const currentSlot = game.selectedSlots[currentSlotIndex];
-  highlightCurrentSlot(); */
-  /* 
-//First slot is mostly skipped if not manuallt handled
-  //Most logic is in NextTurn() which is only called after
-  //Manages 1st slot
-  //remove
-  if(currentSlot && currentSlot.status == "active"){
-    highlightCurrentSlot();
-    if(currentSlot.hand.score > 8 &&
-      currentSlot.hand.score < 12 && 
-      currentSlot.hand.cards.length == 2 &&
-      currentSlotIndex == 0
-    ){//IF DOUBLE IS ON 1SR SLOT, IT WILL REFALL ON THIS LOOP AND CREATE A NEW BUTTON BEFORE THE HAND LENGTH == 3
-      console.log("Hand length is " + currentSlot.hand.cards.length)
-      console.log(`Slot ${currentSlotIndex} CAN DOUBLE`);
-      createDoubleButton();
-    }
-  }
-  //remove */
-
-  /* if((!currentSlot || currentSlot.status == "inactive") && game.started){
-    console.log("THIS FIRST HAND IS EMPTY");
-    nextSlot();
-    return;
-  } */
   
   if(event.target.id == "hit-button") {
     handlesHit(game.currentSlotIndex);
@@ -439,6 +420,24 @@ document.querySelector(".actions").addEventListener("click", function(event) {
   if(event.target.id == "stand-button") {
     console.log(`slot ${game.currentSlotIndex} STAND`)
     nextSlot();
+  }
+  //If double, nextTurn and handles the bet and updating the HTML
+  if(event.target.id == `double-btn-${game.currentSlotIndex}`) {
+    const currentSlot = game.selectedSlots[game.currentSlotIndex];
+    if(currentSlot.player.balance >= currentSlot.bet){
+      currentSlot.player.balance -= currentSlot.bet;
+      currentSlot.bet *= 2;
+      console.log(`Player balance: ${currentSlot.player.balance}`)
+      console.log(`total bet: ${currentSlot.bet}`)
+      updateBetDisplay(game.currentSlotIndex, currentSlot.bet);
+      updateDisplayBalance();
+      console.log("One card only");
+      currentSlot.hit(game.deck);
+      updateHandDisplay(game.currentSlotIndex);
+      nextSlot();
+    }else{
+      alert("Not enough balance to double down");
+    }
   }
 });
 
@@ -485,8 +484,18 @@ function updateHandDisplay(slotIndex) {
   }
 }
 
+function updateBetDisplay(slotIndex, newBet) {
+  const betDiv = document.querySelector(`.slot[data-slot="${slotIndex}"]`);
+  betDiv.querySelector(".bet-amount").innerHTML = `Bet: ${newBet}`;
+}
+
 //Function to move to next slot
 function nextSlot(){
+  //If double btn was crerating, remove before moving to next slot
+  const doubleButton = document.getElementById(`double-btn-${game.currentSlotIndex}`);
+  if(doubleButton) doubleButton.remove();
+
+
   //remove first element of the array of playing indexes
   const removedIndex = game.playingIndexes.shift();
   console.log(`NextSlot() was just called and it just removed slot at index ${removedIndex}`);
@@ -602,11 +611,15 @@ function dealerHasBlackjack() {
     //If no other player has BJ, end game
     if(indexesWithBj.length == 0){
       console.log("No other player has Blackjack, Dealer wins, end game");
+
+      //remove red marking from last slot// game is ended
+      const slotDiv = document.querySelector(`.slot[data-slot="${game.currentSlotIndex}"]`);
+      if(slotDiv) slotDiv.classList.remove("active-slot");
       toggleActionBtn(true);
       game.started = false;
       //currentSlotIndex = game.playingIndexes[0];
     }else{
-      bjIndices.forEach(index => {
+      indexesWithBj.forEach(index => {
         let slot = game.selectedSlots[index];
         console.log(`slot ${index} has BJ, and Ties`);
         slot.player.addBalance(slot.bet); // Bet returned
@@ -622,7 +635,7 @@ function createDoubleButton(currentSlotIndex){
   doubleButton.id = `double-btn-${currentSlotIndex}`;
 
   //insert in new Buttons div
-  document.getElementById("new-buttons").appendChild(doubleButton);
+  document.querySelector(".actions").appendChild(doubleButton);
 }
 
 
