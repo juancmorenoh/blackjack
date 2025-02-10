@@ -374,29 +374,78 @@ document.getElementById("deal-button").addEventListener("click", function() {
     toggleActionBtn(false)
     displayDealerHand();
 
-    if (game.dealer.hand.score == 21){
-      //Push with slots that have BJ
-      //End game if no player has it
-      dealerHasBlackjack();
-      //NEED TO HANDLE IN CASE 1 SLOT IS OPEN AND BOTH DEALER AND SLOT HAVE BJ
-      //GAME DOESN'T END IF DEALER AND ALL PLAYING SLOT HAVE BJ
-    }else{
-      //Pay slots with BJ and set them to null
-      handlePlayersBj();
-      //IF All slots had Bj, end game
-      if (game.selectedSlots.every(slot => slot == null || slot.status == "inactive")) {
-        console.log("All players got Blackjack! Game ends.");
-        game.started = false;
-        toggleActionBtn(true);
-        //verymuch repeated code//create a function endgame()
-        //remove red marking from last slot// game is ended
-        const slotDiv = document.querySelector(`.slot[data-slot="${game.currentSlotIndex}"]`);
-        if(slotDiv) slotDiv.classList.remove("active-slot");
-      }
-    } 
-  }   
+    const dealerCardFaceUp = game.dealer.hand.cards[0];
+    //HERE GOES INSURANCE LOGIC
+    if (dealerCardFaceUp.value == "A"){
+      console.log(`DEALER SHOWS ACE`);
+      createInsuranceButton(game.playingIndexes);
+      setTimeout(() =>{
+        const insuranceButtons = document.querySelectorAll(".insurance-btn");
+          insuranceButtons.forEach(button => {
+            button.remove(); 
+          });
+          if(game.dealer.hand.score == 21){
+            //Push with slots that have BJ
+            //End game if no player has it
+            dealerHasBlackjack();
+            //NEED TO HANDLE IN CASE 1 SLOT IS OPEN AND BOTH DEALER AND SLOT HAVE BJ
+            //GAME DOESN'T END IF DEALER AND ALL PLAYING SLOT HAVE BJ
+            payoutSlots();//this basically only pays insurance has function above push with playerJB
+            
+          }else{//dealer has no BJ
+            const insuranceP = document.querySelectorAll(".insurance-message");
+            insuranceP.forEach(p => {
+              p.remove(); 
+            });
+            //remove insurance from the slot otherwise it gets paid at the end
+            game.playingIndexes.forEach(index =>{
+              if(game.selectedSlots[index].insurance){
+                game.selectedSlots[index].insurance = undefined;
+              }
+            });
+              
+            console.log("Dealer does not have BJ, insurance bets lost")
+            //Pay slots with BJ and set them to null
+            handlePlayersBj();
+            //IF All slots had Bj, end game
+            if (game.selectedSlots.every(slot => slot == null || slot.status == "inactive")) {
+              console.log("All players got Blackjack! Game ends.");
+              game.started = false;
+              toggleActionBtn(true);
+              //verymuch repeated code//create a function endgame()
+              //remove red marking from last slot// game is ended
+              const slotDiv = document.querySelector(`.slot[data-slot="${game.currentSlotIndex}"]`);
+              if(slotDiv) slotDiv.classList.remove("active-slot");
+            }
+          }
+      },10000);
+    }else{//dealer doesn't show Ace
+      //might still have 21, first shown card 10
+      //handle dealer BJ but no possibility of insurance
+      if(game.dealer.hand.score == 21){
+        dealerHasBlackjack();
+        //NEED TO HANDLE IN CASE 1 SLOT IS OPEN AND BOTH DEALER AND SLOT HAVE BJ
+        //GAME DOESN'T END IF DEALER AND ALL PLAYING SLOT HAVE BJ
+      }else{
+        handlePlayersBj();
+        //IF All slots had Bj, end game
+        if (game.selectedSlots.every(slot => slot == null || slot.status == "inactive")) {
+          console.log("All players got Blackjack! Game ends.");
+          game.started = false;
+          toggleActionBtn(true);
+          //verymuch repeated code//create a function endgame()
+          //remove red marking from last slot// game is ended
+          const slotDiv = document.querySelector(`.slot[data-slot="${game.currentSlotIndex}"]`);
+          if(slotDiv) slotDiv.classList.remove("active-slot");
+        };
+      };  
+    };
+  };
 });
 
+function handleInsurance(){
+  game.playingIndexes
+}
 
 function displayDealerHand(){
   const dealerHand = game.dealer.hand;
@@ -545,6 +594,13 @@ function payoutSlots() {
       console.log(`Slot ${index} pushes (tie). Bet returned.`);
       player1.balance += parseInt(slot.bet) ;
     }
+    //pays any slots that was insured
+    if(slot.insurance){
+      console.log(`Insurance bet for slot ${index} paid out!`);
+      slot.player.balance += slot.insurance * 3;
+      console.log(`Insurance ${slot.insurance * 3}`);
+      slot.insurance = null;
+    }
   });
 }
 
@@ -617,7 +673,7 @@ function dealerHasBlackjack() {
       if(slotDiv) slotDiv.classList.remove("active-slot");
       toggleActionBtn(true);
       game.started = false;
-      //currentSlotIndex = game.playingIndexes[0];
+      
     }else{
       indexesWithBj.forEach(index => {
         let slot = game.selectedSlots[index];
@@ -625,6 +681,13 @@ function dealerHasBlackjack() {
         slot.player.addBalance(slot.bet); // Bet returned
         game.selectedSlots[index].status = "inactive";
       });
+      //If Dealer and all players have BJ, end game.
+      if(indexesWithBj.length == game.playingIndexes.length){
+        const slotDiv = document.querySelector(`.slot[data-slot="${game.currentSlotIndex}"]`);
+        if(slotDiv) slotDiv.classList.remove("active-slot");
+        toggleActionBtn(true);
+        game.started = false;
+      }
     }
 }
 
@@ -638,7 +701,43 @@ function createDoubleButton(currentSlotIndex){
   document.querySelector(".actions").appendChild(doubleButton);
 }
 
+function createInsuranceButton(arrayOfIndexes){
+  arrayOfIndexes.forEach(index =>{
+    //If the playing index also has BJ ignore
+    //Might later implement with function that pays players wth BJ
+    const currentSlot = game.selectedSlots[index];
+    if(currentSlot.hand.score == 21) return;
+    //For everyother create the button and give id of the index.
+    const insuranceButton = document.createElement("button");
+    insuranceButton.innerHTML = "Click to insure";
+    insuranceButton.id = `insurance-btn-${index}`;
+    insuranceButton.classList.add("insurance-btn")
+    const parentDiv = document.querySelector(`.slot[data-slot="${index}"]`);
+    parentDiv.appendChild(insuranceButton);
 
+    insuranceButton.addEventListener('click', () => {
+      console.log(`Insurance clicked for Slot ${index}`);
+      //If player balance is at least half the bet
+      const insuranceAmount = currentSlot.bet / 2;
+      const playerBalance = currentSlot.player.balance
+      if(playerBalance >= insuranceAmount){
+        //update the balance
+        //create text for insured slots
+        //remove insurance btn
+        console.log("Insurance activated");
+        currentSlot.player.balance -= insuranceAmount;
+        currentSlot.insurance = insuranceAmount;
+        const insuranceDiv = document.createElement("p");
+        insuranceDiv.classList.add("insurance-message");
+        insuranceDiv.innerHTML = `Insured for $${insuranceAmount}`;
+        parentDiv.appendChild(insuranceDiv);
+        insuranceButton.remove();
+      }else{
+        alert("Not enough money for insurance");
+      }
+    });
+  });
+}
 
 
 //REMOVE
