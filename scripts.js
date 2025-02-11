@@ -105,7 +105,6 @@ class Hand {
   }
 
   isBust(){
-    //this.calculateScore();
     return this.score > 21
   }
 
@@ -157,10 +156,10 @@ class Slot{
     this.player.balance -= amount;
   }
 
-
   hit(deck){
     this.hand.addCard(deck.dealCard());
   }
+
 }
 
 class Dealer{
@@ -175,13 +174,22 @@ class Dealer{
       this.hand.addCard(deck.dealCard());
     }
   }
+
+  //Display dealer hand on HTML
+  displayHand(){
+    document.getElementById("dealer-cards").innerHTML = this.hand;
+  }
+
+  showAce(){
+    return this.hand.cards[0].value == "A"
+  }
 }
 
 
 class Game{
   started;
   deck;
-  selectedSlots;
+  allSlots;
   dealer;
   player;
 
@@ -189,38 +197,28 @@ class Game{
     this.deck = new Deck(6);  
     this.player = player;
     this.dealer = new Dealer();
-    this.selectedSlots = new Array(numSlots).fill(null);
+    this.allSlots = new Array(numSlots).fill(null);
     this.started = false;
   }
 
-  /*
-  joinSlot(slotIndex){
-    if(!this.selectedSlots[slotIndex]){
-      this.selectedSlots[slotIndex] = this.player.addSlot();
-      return true;
-    }
-    return false;
-  }
-*/
-
   joinSlot(slotIndex) {
-    if (this.selectedSlots[slotIndex] == null) {
+    if (this.allSlots[slotIndex] == null) {
       console.log("Creating slot")
       // Add slot if null
-      this.selectedSlots[slotIndex] = new Slot(this.player);
+      this.allSlots[slotIndex] = new Slot(this.player);
       return true;
     } else {
       // Remove slot if it already exists
       //reset bet to 0 before deleting slot
       console.log("Removing slot")
       //this.selectedSlots[slotIndex].bet = 0;
-      this.selectedSlots[slotIndex] = null;
+      this.allSlots[slotIndex] = null;
       return false;
     }
   }
 
   checkBeforeDealingCards(){
-    if(this.selectedSlots.filter(slot => slot != null).length == 0){
+    if(this.allSlots.filter(slot => slot != null).length == 0){
       alert("Please select at least one slot");
       return false;
     }else if((this.deck.cards.length < 52)){
@@ -239,13 +237,12 @@ class Game{
   dealFirstCards(){    
     const totalRounds = 2;
     for (let round = 0 ; round < totalRounds ; round++){
-      this.selectedSlots.forEach((slot,index) =>{
+      this.allSlots.forEach((slot,index) =>{
         if(slot != null){
           slot.hit(this.deck);
           console.log(`Dealt to Slot ${index}: ${slot.hand}`);
         }
       })
-      
       this.dealer.hand.addCard(this.deck.dealCard()); 
       console.log(`Dealt to Dealer: ${this.dealer.hand}`); 
     }
@@ -253,7 +250,7 @@ class Game{
 
   //function to check if the total bet is less than the balance
   isValidBet(){
-    const bet = this.player.getTotalBetAmount(this.selectedSlots);
+    const bet = this.player.getTotalBetAmount(this.allSlots);
     if (bet > this.player.balance){
       return false;
     }
@@ -262,26 +259,205 @@ class Game{
 
   //function to check if all slots have a bet
   allSelectedSlotBet(){
-    return this.selectedSlots.filter(slot => slot !== null).every(slot => slot.bet > 0);
+    return this.allSlots.filter(slot => slot !== null).every(slot => slot.bet > 0);
+  }
+
+  getPlayingSlotIndexes() {
+    let playingSlotsIndex = [];
+    this.allSlots.forEach((slot,index) => {
+      if (slot != null && slot.status != "inactive"){
+        playingSlotsIndex.push(index);
+      }
+    });
+    return playingSlotsIndex;
+  }
+  
+  //function to initialize the game
+  startRound(){
+    if(!this.checkBeforeDealingCards()) return;
+    this.started = true;
+    //Activate action buttons hit-stand
+    toggleActionBtn(false)
+
+    //For all not NULL slots:
+    //Place the bet(update balance) - change slot status to true - create a newHand per slot
+    this.allSlots.filter(slot => slot != null ).forEach(slot => {
+      slot.placeBet(slot.bet);
+      slot.status = "active";
+      slot.hand = new Hand();
+    });
+
+    this.playingSlotsIndexes = this.getPlayingSlotIndexes();
+    this.currentSlotIndex = this.playingSlotsIndexes[0];
+
+    //Create new hand for dealer
+    this.dealer.hand = new Hand();
+    //RESET Hands HTML player-dealer
+    document.querySelectorAll(".hand-display").forEach((elment)=>{
+      elment.innerHTML = "";
+    });
+    document.getElementById("dealer-cards").innerHTML = "";
+    //Remove insurance message from previous turn if any
+    const insuranceP = document.querySelectorAll(".insurance-message");
+    insuranceP.forEach(p => {
+      p.remove(); 
+    });
+    //update balance
+    updateDisplayBalance();
+    //deal first 2 cards to players and dealer
+    this.dealFirstCards();
+    //display player hands in html
+    document.querySelectorAll(".slot").forEach((slotDiv,index) =>{
+      const slot = this.allSlots[index];
+      if(slot != null){
+        slotDiv.querySelector(".hand-display").innerHTML = `${slot.hand}`
+      }
+    })
+    //display dealer hand in html
+    this.dealer.displayHand();
+    
+    setUpCurrentSlot(this.currentSlotIndex);
+
+    //check dealer Ace
+    if(this.dealer.showAce()){
+      console.log("Dealer show ace, insurance open for 10seconds");
+      //Disable hit-stand and possible double-split btn
+      document.querySelectorAll(".actions button").forEach(button =>{
+        button.disabled = true;
+      })
+      //create button and event listener
+      //manages all the logic for placing the insurance bet and related HTML
+      //updates the player balance
+      createInsuranceButton(game.playingSlotsIndexes);
+      updateDisplayBalance();
+      setTimeout(handleInsurance,10000);
+      
+    }else if(this.dealer.hand.isBlackJack()){
+      console.log("Dealer has BJ");
+      this.endRound();
+    }else{
+      //Check for players with BJ to pay immidiatly
+      handlePlayersBj();
+      updateDisplayBalance();
+      //If no more active slots
+      if (game.allSlots.every(slot => slot == null || slot.status == "inactive")) {
+        this.endRound();
+      }
+    }
+    
+    
+  } 
+
+  endRound(){
+    //pay all active slots
+    this.payoutSlots();
+    //update balance
+    updateDisplayBalance();
+    toggleActionBtn(true);
+    game.started = false;
+    //remove double-button(if dealer BJ and player could potentially double)
+    //might do with split as well
+    const doubleBtn = document.querySelector('[id^="double-btn-"]');
+    if (doubleBtn) doubleBtn.remove();
+    //Remove red border from last slot
+    const slotDiv = document.querySelector(`.slot[data-slot="${game.currentSlotIndex}"]`);
+    if(slotDiv) slotDiv.classList.remove("active-slot");
+    console.log("END OF THE GAME");
+  }
+
+  payoutSlots(){
+    this.allSlots.forEach((slot, index) => {
+      if (slot == null || slot.status == "inactive") return;
+      const dealerScore = this.dealer.hand.score;
+      const playerScore = slot.hand.score;
+  
+      if (playerScore > 21) {
+        console.log(`Slot ${index} busted and lost the bet.`);
+        
+      } else if (dealerScore > 21) {
+        console.log(`Dealer busted! Slot ${index} wins.`);
+        player1.balance += parseInt(slot.bet) * 2; 
+      } else if (playerScore > dealerScore) {
+        console.log(`Slot ${index} wins!`);
+        player1.balance += parseInt(slot.bet)  * 2; 
+      } else if (playerScore < dealerScore) {
+        console.log(`Slot ${index} loses.`);
+        
+      } else {
+        console.log(`Slot ${index} pushes (tie). Bet returned.`);
+        player1.balance += parseInt(slot.bet) ;
+      }
+    });
+  }
+
+}
+
+function payInsurance(){
+  game.allSlots.forEach(slot => {
+    if(slot && slot.insurance){
+      slot.player.balance += parseInt(slot.insurance) * 3;
+      console.log("paid insurance");
+      slot.insurance = null;
+    }
+  })
+}
+
+//ONLY WHEN DEALER SHOW ACE
+function handleInsurance(){
+  document.querySelectorAll(".actions button").forEach(button =>{
+    button.disabled = false;
+  })
+  
+  //Remove insurance btn
+  const insuranceButtons = document.querySelectorAll(".insurance-btn");
+  insuranceButtons.forEach(button => {
+    button.remove(); 
+  });
+  //If dealer has BJ pay insurance and endRound
+  if(game.dealer.hand.isBlackJack()){
+    payInsurance();
+    game.endRound();
+    
+  }else{//dealer doesn't have BJ
+    //remove insurance message
+    const insuranceP = document.querySelectorAll(".insurance-message");
+    insuranceP.forEach(p => {
+      p.remove(); 
+    });
+    //remove insurance from the slot
+    game.allSlots.forEach(slot =>{
+      if(slot && slot.insurance){
+        slot.insurance = null;
+      }
+    });
+    console.log("Dealer does not have BJ, insurance bets lost")
+    //Pay slots with BJ and set them to inactive
+    handlePlayersBj();
+    //If no more active slots
+    if (game.allSlots.every(slot => slot == null || slot.status == "inactive")) {
+      endRound();
+    }
   }
 }
 
 const player1 = new Player("Luca");
 player1.addBalance(100);
 const game = new Game(player1,3);
-document.getElementById("balance-display").innerHTML = player1.balance;
+updateDisplayBalance();
 toggleActionBtn(true);
 
 
 function toggleActionBtn(boolean){
   document.getElementById("hit-button").disabled = boolean;
   document.getElementById("stand-button").disabled = boolean;
+  document.getElementById("deal-button").disabled = !boolean;
 }
 
 //ASSIGN SLOT
 document.querySelectorAll(".slot-btn").forEach((btn) => {
   btn.addEventListener("click", function() {
     console.log("clicked");
+    
     if(game.started){
       alert("Cannot remove or add slots mid game");
       return;
@@ -294,7 +470,7 @@ document.querySelectorAll(".slot-btn").forEach((btn) => {
         this.textContent = `Playing by ${game.player.name}`;
         //using innetHTML override the listener when changing is content, insertAjacentHTML instead
         this.insertAdjacentHTML("afterend", `<input type="radio" id="slot-${slotIndex}" name="bet-slot" value=${slotIndex}>`);
-      
+        
     }else{
       console.log(`slot ${slotIndex} removed`);
       //remove radio input
@@ -311,6 +487,7 @@ document.querySelectorAll(".slot-btn").forEach((btn) => {
       this.innerHTML = `Join Slot ${slotIndex}`; // Reset button text
       
     }  
+    
   });
 
 });
@@ -330,7 +507,7 @@ document.querySelectorAll(".bet-button").forEach((betBtn) => {
     }
     const slotIndex = selectedSlot.value;
     const valueBet = this.innerHTML;
-    game.selectedSlots[slotIndex].bet = valueBet;
+    game.allSlots[slotIndex].bet = valueBet;
     
     const betAmountElement = selectedSlot.parentElement.querySelector('.bet-amount');
     betAmountElement.textContent = `Bet: ${valueBet}`;
@@ -341,124 +518,13 @@ document.querySelectorAll(".bet-button").forEach((betBtn) => {
 
 //DEAL-BUTTON
 document.getElementById("deal-button").addEventListener("click", function() {
-  console.log(game.selectedSlots)
+  console.log(game.allSlots)
   if(game.started){
     alert("End the game before starting a new one!");
     return;
   }
-  //if bet and slot are all good, deal cards
-  if(game.checkBeforeDealingCards()){
-
-    //place bet of all not null slots
-    game.selectedSlots.filter(slot => slot != null).forEach(slot =>{
-      slot.placeBet(slot.bet)
-    });
-
-    console.log(`Total bet amount is: ${game.player.getTotalBetAmount(game.selectedSlots)}`);
-    resetGame();
-    game.started = true;
-    updateDisplayBalance();
-
-    //deal the first round of cards (2 cards each)
-    game.dealFirstCards();
-
-    setUpCurrentSlot(game.currentSlotIndex);
-
-    document.querySelectorAll(".slot").forEach((slotDiv,index) =>{
-      const slot = game.selectedSlots[index];
-      if(slot != null){
-        slotDiv.querySelector(".hand-display").innerHTML = `${slot.hand}`
-      }
-    })
-    
-    toggleActionBtn(false)
-    displayDealerHand();
-
-    const dealerCardFaceUp = game.dealer.hand.cards[0];
-    //HERE GOES INSURANCE LOGIC
-    if (dealerCardFaceUp.value == "A"){
-      console.log(`DEALER SHOWS ACE`);
-      createInsuranceButton(game.playingIndexes);
-      setTimeout(() =>{
-        const insuranceButtons = document.querySelectorAll(".insurance-btn");
-          insuranceButtons.forEach(button => {
-            button.remove(); 
-          });
-          if(game.dealer.hand.score == 21){
-            //Push with slots that have BJ
-            //End game if no player has it
-            dealerHasBlackjack();
-            //NEED TO HANDLE IN CASE 1 SLOT IS OPEN AND BOTH DEALER AND SLOT HAVE BJ
-            //GAME DOESN'T END IF DEALER AND ALL PLAYING SLOT HAVE BJ
-            payoutSlots();//this basically only pays insurance has function above push with playerJB
-            
-          }else{//dealer has no BJ
-            const insuranceP = document.querySelectorAll(".insurance-message");
-            insuranceP.forEach(p => {
-              p.remove(); 
-            });
-            //remove insurance from the slot otherwise it gets paid at the end
-            game.playingIndexes.forEach(index =>{
-              if(game.selectedSlots[index].insurance){
-                game.selectedSlots[index].insurance = undefined;
-              }
-            });
-              
-            console.log("Dealer does not have BJ, insurance bets lost")
-            //Pay slots with BJ and set them to null
-            handlePlayersBj();
-            //IF All slots had Bj, end game
-            if (game.selectedSlots.every(slot => slot == null || slot.status == "inactive")) {
-              console.log("All players got Blackjack! Game ends.");
-              game.started = false;
-              toggleActionBtn(true);
-              //verymuch repeated code//create a function endgame()
-              //remove red marking from last slot// game is ended
-              const slotDiv = document.querySelector(`.slot[data-slot="${game.currentSlotIndex}"]`);
-              if(slotDiv) slotDiv.classList.remove("active-slot");
-            }
-          }
-      },10000);
-    }else{//dealer doesn't show Ace
-      //might still have 21, first shown card 10
-      //handle dealer BJ but no possibility of insurance
-      if(game.dealer.hand.score == 21){
-        dealerHasBlackjack();
-        //NEED TO HANDLE IN CASE 1 SLOT IS OPEN AND BOTH DEALER AND SLOT HAVE BJ
-        //GAME DOESN'T END IF DEALER AND ALL PLAYING SLOT HAVE BJ
-      }else{
-        handlePlayersBj();
-        //IF All slots had Bj, end game
-        if (game.selectedSlots.every(slot => slot == null || slot.status == "inactive")) {
-          console.log("All players got Blackjack! Game ends.");
-          game.started = false;
-          toggleActionBtn(true);
-          //verymuch repeated code//create a function endgame()
-          //remove red marking from last slot// game is ended
-          const slotDiv = document.querySelector(`.slot[data-slot="${game.currentSlotIndex}"]`);
-          if(slotDiv) slotDiv.classList.remove("active-slot");
-        };
-      };  
-    };
-  };
+  game.startRound();
 });
-
-function handleInsurance(){
-  game.playingIndexes
-}
-
-function displayDealerHand(){
-  const dealerHand = game.dealer.hand;
-  document.getElementById("dealer-cards").innerHTML = `${dealerHand}`
-    displayDealerHand();
-};
-
-
-function displayDealerHand(){
-  const dealerHand = game.dealer.hand;
-  document.getElementById("dealer-cards").innerHTML = `${dealerHand}`
-}
-
 
 //HIT-STAND-DOUBLE BUTTONS
 document.querySelector(".actions").addEventListener("click", function(event) {
@@ -472,7 +538,7 @@ document.querySelector(".actions").addEventListener("click", function(event) {
   }
   //If double, nextTurn and handles the bet and updating the HTML
   if(event.target.id == `double-btn-${game.currentSlotIndex}`) {
-    const currentSlot = game.selectedSlots[game.currentSlotIndex];
+    const currentSlot = game.allSlots[game.currentSlotIndex];
     if(currentSlot.player.balance >= currentSlot.bet){
       currentSlot.player.balance -= currentSlot.bet;
       currentSlot.bet *= 2;
@@ -493,20 +559,18 @@ document.querySelector(".actions").addEventListener("click", function(event) {
 //FUNCTION TO PROPERLY SET UP The given
 //Add buttons, hightlite etc...
 //takes the index of the slot as parameter and
-function setUpCurrentSlot(currentSlotIndex){
-  console.log(`Next turn: Player in Slot ${game.currentSlotIndex}`);
-  const currentSlot = game.selectedSlots[currentSlotIndex];
-  highlightCurrentSlot(currentSlotIndex);
-  if(currentSlot.hand.score > 8 &&
-    currentSlot.hand.score < 12 && 
-    currentSlot.hand.cards.length == 2){
-      console.log(`Current slot can double`)
-      createDoubleButton(currentSlotIndex);
-  }
+function setUpCurrentSlot(index){
+  console.log(`Next turn: Player in Slot ${index}`);
+  const currentSlot = game.allSlots[index];
+  highlightCurrentSlot(index);
+  if(currentSlot.hand.canDouble()){
+    createDoubleButton(index);
+  }     
 }
 
+
 function handlesHit(currentSlotIndex){
-  const currentSlot = game.selectedSlots[currentSlotIndex];
+  const currentSlot = game.allSlots[currentSlotIndex];
   currentSlot.hit(game.deck);
   updateHandDisplay(currentSlotIndex);
   if (currentSlot.hand.score > 21) {  
@@ -517,16 +581,11 @@ function handlesHit(currentSlotIndex){
     nextSlot();
   }
 }
-//function to display the dealer's hand
-function displayDealerHand(){
-  const dealerHand = game.dealer.hand;
-  document.getElementById("dealer-cards").innerHTML = `${dealerHand}`
-}
 
 //Function to display player's hand in each slot
 function updateHandDisplay(slotIndex) {
   const slotDiv = document.querySelector(`.slot[data-slot="${slotIndex}"]`);
-  const playerSlot = game.selectedSlots[slotIndex];
+  const playerSlot = game.allSlots[slotIndex];
 
   if (slotDiv && playerSlot) {
     slotDiv.querySelector(".hand-display").innerHTML = `${playerSlot.hand}`;
@@ -546,79 +605,28 @@ function nextSlot(){
 
 
   //remove first element of the array of playing indexes
-  const removedIndex = game.playingIndexes.shift();
+  const removedIndex = game.playingSlotsIndexes.shift();
   console.log(`NextSlot() was just called and it just removed slot at index ${removedIndex}`);
-  console.log(`Remaining slots : ${game.playingIndexes.length}`)
-  if(game.playingIndexes.length > 0) {
-    game.currentSlotIndex = game.playingIndexes[0];
+  console.log(`Remaining slots : ${game.playingSlotsIndexes.length}`)
+  if(game.playingSlotsIndexes.length > 0) {
+    game.currentSlotIndex = game.playingSlotsIndexes[0];
     setUpCurrentSlot(game.currentSlotIndex);
   }else{
-    //remove red marking from last slot// game is ended
-    const slotDiv = document.querySelector(`.slot[data-slot="${game.currentSlotIndex}"]`);
-    if(slotDiv) slotDiv.classList.remove("active-slot");
-
-    console.log("All players have finished. Dealer's turn!");
-    game.dealer.play(game.deck);
-    displayDealerHand();
-    payoutSlots();
-    updateDisplayBalance();
-    toggleActionBtn(true);
-    game.started = false;
+    const activePlayersExist = game.allSlots.some(slot => slot && slot.status === "active" && slot.hand.score <= 21);
+    if(activePlayersExist){//some players are still playing
+      console.log("All players have finished. Dealer's turn!");
+      game.dealer.play(game.deck);
+      game.dealer.displayHand();
+    }else{
+      console.log("No active players, dealer does not draw cards!");
+    }
+    endRound();
   }
 }
 
 function updateDisplayBalance(){
-  document.getElementById("balance-display").innerHTML = player1.balance;
+  document.getElementById("balance-display").innerHTML = game.player.balance;
 }
-
-function payoutSlots() {
-  const dealerScore = game.dealer.hand.score;
-
-  game.selectedSlots.forEach((slot, index) => {
-    if (slot == null || slot.status == "inactive") return;
-    const playerScore = slot.hand.score;
-
-    if (playerScore > 21) {
-      console.log(`Slot ${index} busted and lost the bet.`);
-      
-    } else if (dealerScore > 21) {
-      console.log(`Dealer busted! Slot ${index} wins.`);
-      player1.balance += parseInt(slot.bet) * 2; 
-    } else if (playerScore > dealerScore) {
-      console.log(`Slot ${index} wins!`);
-      player1.balance += parseInt(slot.bet)  * 2; 
-    } else if (playerScore < dealerScore) {
-      console.log(`Slot ${index} loses.`);
-      
-    } else {
-      console.log(`Slot ${index} pushes (tie). Bet returned.`);
-      player1.balance += parseInt(slot.bet) ;
-    }
-    //pays any slots that was insured
-    if(slot.insurance){
-      console.log(`Insurance bet for slot ${index} paid out!`);
-      slot.player.balance += slot.insurance * 3;
-      console.log(`Insurance ${slot.insurance * 3}`);
-      slot.insurance = null;
-    }
-  });
-}
-
-function resetGame(){
-  document.querySelectorAll(".hand-display").forEach((elment)=>{
-    elment.innerHTML = "";
-  });
-  document.getElementById("dealer-cards").innerHTML = "";
-
-  game.selectedSlots.filter(slot => slot!= null).forEach((slot) => {
-    slot.status = "active";
-    slot.hand = new Hand();
-  });
-  game.dealer.hand = new Hand();
-  game.playingIndexes = getPlayingIndexes(game.selectedSlots);
-  game.currentSlotIndex = game.playingIndexes[0];
-}
-
 
 //Logic to be immproved and remove redundant checks
 //FUNCTIONS TO HANDLE BLACKJACKS
@@ -628,67 +636,25 @@ function getIndexesBj(slots) {
   let indexWithBj = [];
   slots.forEach((slot, index) => {
     if (slot == null) return;
-    if (slot.hand.score === 21 && slot.hand.cards.length === 2) {
+    if (slot.hand.isBlackJack()) {
       indexWithBj.push(index);
     }
   });
   return indexWithBj;
 }
 
-function getPlayingIndexes(slots){
-  let playingIndexes = [];
-  slots.forEach((slot, index) => {
-    if (slot == null || slot.status == "inactive") return;
-    playingIndexes.push(index);
-  });
-  return playingIndexes;
-}
 
 //Pays slots with BJ when dealer Doesn't
 function handlePlayersBj(){
-  let indexesWithBj = getIndexesBj(game.selectedSlots);
+  let indexesWithBj = getIndexesBj(game.allSlots);
   if (indexesWithBj.length > 0) {
-    console.log("Some players have Blackjack, but the dealer does not.");
-
     indexesWithBj.forEach(index => {
-      let slot = game.selectedSlots[index];
+      let slot = game.allSlots[index];
       console.log(`Slot ${index} wins with Blackjack! Paying 1.5x the bet.`);
       slot.player.addBalance(slot.bet * 1.5); // 1.5x payout
-      game.selectedSlots[index].status = "inactive"; // Remove slot from play
+      game.allSlots[index].status = "inactive"; // Remove slot from play
     });
   }
-}
-//Dealer has BJ
-//Push with slots that have BJ
-//End game if nonone has it
-function dealerHasBlackjack() {
-    console.log("Dealer has BJ")
-    let indexesWithBj = getIndexesBj(game.selectedSlots);
-    //If no other player has BJ, end game
-    if(indexesWithBj.length == 0){
-      console.log("No other player has Blackjack, Dealer wins, end game");
-
-      //remove red marking from last slot// game is ended
-      const slotDiv = document.querySelector(`.slot[data-slot="${game.currentSlotIndex}"]`);
-      if(slotDiv) slotDiv.classList.remove("active-slot");
-      toggleActionBtn(true);
-      game.started = false;
-      
-    }else{
-      indexesWithBj.forEach(index => {
-        let slot = game.selectedSlots[index];
-        console.log(`slot ${index} has BJ, and Ties`);
-        slot.player.addBalance(slot.bet); // Bet returned
-        game.selectedSlots[index].status = "inactive";
-      });
-      //If Dealer and all players have BJ, end game.
-      if(indexesWithBj.length == game.playingIndexes.length){
-        const slotDiv = document.querySelector(`.slot[data-slot="${game.currentSlotIndex}"]`);
-        if(slotDiv) slotDiv.classList.remove("active-slot");
-        toggleActionBtn(true);
-        game.started = false;
-      }
-    }
 }
 
 function createDoubleButton(currentSlotIndex){
@@ -705,7 +671,7 @@ function createInsuranceButton(arrayOfIndexes){
   arrayOfIndexes.forEach(index =>{
     //If the playing index also has BJ ignore
     //Might later implement with function that pays players wth BJ
-    const currentSlot = game.selectedSlots[index];
+    const currentSlot = game.allSlots[index];
     if(currentSlot.hand.score == 21) return;
     //For everyother create the button and give id of the index.
     const insuranceButton = document.createElement("button");
@@ -739,286 +705,9 @@ function createInsuranceButton(arrayOfIndexes){
   });
 }
 
-
-//REMOVE
 function highlightCurrentSlot(currentSlotIndex) {
     document.querySelectorAll(".slot").forEach(slot => slot.classList.remove("active-slot"));
     const activeSlot = document.querySelector(`.slot[data-slot="${currentSlotIndex}"]`);
     if (activeSlot) activeSlot.classList.add("active-slot"); 
   
 }
-//REMOVE
-
-//REMEBER TO ACTIVATE ALL PLAYING SLOTS
-/*
-
-
-
-//Function to activate or deactivate Bet Buttons
-const disableBetButtons = (boolean) => {
-  betButtons.forEach( button =>{
-    button.disabled = boolean;
-  })
-}
-
-
-//Function to update hand and score HTML
-const updateHandAndScore = (hand,score, handDiv, scoreDiv) =>{
-  displayHand(hand, handDiv);
-  displayScore(score, scoreDiv);
-}
-
-//Function calculates payout
-//Bet + winnings
-const calculatePayout = (bet, multiplier) => {
-  return bet * multiplier;
-}
-
-//Reset buttons TO only allow NEWGAME button
-const resetButtons = () => {
-  hitButton.disabled = true;
-  standButton.disabled = true;
-  dealButton.disabled = true;
-  newGameButton.disabled = false;
-}
-
-//Empty HTML and reset buttons
-const resetGame = () =>{
-  playersHandDiv.innerHTML = "";
-  dealersHandDiv.innerHTML = ""; 
-  playerScoreDiv.innerHTML = "";
-  dealerScoreDiv.innerHTML = "";
-  messageDiv.innerHTML = "";
-  resultDiv.innerHTML = "";
-  
-  playersHand = [];
-  dealersHand = [];
-  playerScore = 0;
-  dealerScore = 0;
-  dealButton.disabled = false;
-}
-
-// General function to create a button in the DOM
-//Return button created
-const createActionButton = (id, label) => {
-  const button = document.createElement("button");
-  const actionsContainer = document.querySelector(".actions");
-  button.setAttribute("id", id);
-  button.innerHTML = label; 
-  actionsContainer.insertBefore(button, actionsContainer.children[1]);
-
-  return button; 
-};
-
-//Function to determine the winner of the game
-//return string
-const determineWinner = (playersHand, dealersHand,) => {
-  const playerScore = getHandScore(playersHand);
-  const dealerScore = getHandScore(dealersHand);
-  //BlackJack cases
-  if (isBlackjack(playersHand) && dealerScore === GAME_VALUES.ACE_VALUE) return GAME_RESULTS.PAY_BLACKJACK_1_TO_1;
-  if (isBlackjack(playersHand) && isBlackjack(dealersHand)) return GAME_RESULTS.BOTH_BLACKJACK;
-  if (isBlackjack(playersHand)) return GAME_RESULTS.PLAYER_BLACKJACK;
-  if (isBlackjack(dealersHand)) return GAME_RESULTS.DEALER_BLACKJACK;
-  
-  //Regular cases
-  if (isBust(playersHand)) return GAME_RESULTS.PLAYER_BUST;
-  if (isBust(dealersHand)) return GAME_RESULTS.DEALER_BUST;
-  if (playerScore > dealerScore) return GAME_RESULTS.PLAYER_WINS;
-  if (playerScore < dealerScore) return GAME_RESULTS.DEALER_WINS;
-  
-  return GAME_RESULTS.TIE;
-}
-
-//Function to pay the winning based on bet and outcome
-//returns the balance updated
-const payWinnings = (result, bet, balance) => {
-  const multiplier = PAYOUT_MULTIPLIERS[result] || 0;
-  const payout = calculatePayout(bet,multiplier);
-
-  return balance += payout;
-}
-
-//Logic to handle the end of the game
-//Displays outcome
-//Pay winnings and update balance
-//return balance
-const endTurn = (playersHand,dealersHand, bet, balance) => {
-  const result = determineWinner(playersHand,dealersHand);
-  resultDiv.innerHTML = result;
-  balance = payWinnings(result,bet,balance);
-  balanceDiv.innerHTML = `${balance}`;
-  resetButtons();
-
-  return balance;
-}
-
-//Display all cards in hand in a redable format in the given div
-const displayHand = (hand,div) => {
-  const handString = hand.map(card => `${card.rank} of ${card.suit}`).join(' | ');
-  div.innerHTML = handString;
-}
-
-//Display the score in the given div
-const displayScore = (score,div) => {
-  div.innerHTML = "Score : " + score;
-}
-
-//COSTANTS RESULTS
-const GAME_RESULTS = {
-  PLAYER_BLACKJACK: "PLAYER_BLACKJACK",
-  DEALER_BLACKJACK: "DEALER_BLACKJACK",
-  BOTH_BLACKJACK: "BOTH_BLACKJACK",
-  PLAYER_BUST: "PLAYER_BUST",
-  DEALER_BUST: "DEALER_BUST",
-  PLAYER_WINS: "PLAYER_WINS",
-  DEALER_WINS: "DEALER_WINS",
-  TIE: "TIE",
-  PAY_BLACKJACK_1_TO_1: "PAY_BLACKJACK_1_TO_1",
-};
-
-//CONST PAYOUTS
-const PAYOUT_MULTIPLIERS = {
-  [GAME_RESULTS.PLAYER_BLACKJACK]: 2.5,
-  [GAME_RESULTS.PLAYER_WINS]: 2,
-  [GAME_RESULTS.DEALER_BUST]: 2,
-  [GAME_RESULTS.TIE]: 1,
-  [GAME_RESULTS.BOTH_BLACKJACK]: 1,
-  [GAME_RESULTS.PAY_BLACKJACK_1_TO_1]: 2,
-};
-
-//CONST GAME
-const GAME_VALUES = {
-  ACE_VALUE: 11,
-  BLACKJACK_SCORE: 21,
-  FACE_CARD_VALUE : 10,
-}
-
-//GAME VARIABLES AND FLOW
-let deck = []; 
-let playersHand = [];
-let dealersHand = [];
-let balance = 100;
-let bet = 0;
-let playerScore = 0;  
-let dealerScore = 0;
-let isInsurance = false;
-let dealersHandDiv = document.getElementById("dealer-cards");
-let playersHandDiv = document.getElementById("player-cards");
-let messageDiv = document.getElementById("message");
-let resultDiv = document.getElementById("result");
-let insuranceDiv = document.getElementById("insurance");
-let playerScoreDiv = document.getElementById("player-score");
-let dealerScoreDiv = document.getElementById("dealer-score");
-  
-let betDiv = document.getElementById("show-bet");
-let balanceDiv = document.getElementById("balance-display");
-
-let newGameButton = document.getElementById("new-game-button");
-let dealButton = document.getElementById("deal-button");
-let hitButton = document.getElementById("hit-button");
-let standButton = document.getElementById("stand-button");
-
-let betButtons = document.querySelectorAll('.bet-button');
-
-let doubleDownButton = null;
-let insuranceButton = null;
-let OnetoOneBlackjackButton = null;
-
-balanceDiv.innerHTML = `${balance}`;
-resetButtons();
-
-/* if(doubleDownButton){
-  doubleDownButton.remove();
-}
-if(insuranceButton){
-  insuranceButton.remove();
-}
- 
-
-//EVENTLISTENERS
-//NEW GAME
-newGameButton.addEventListener("click", () => {
-  //Create and Shuffle deck
-  deck = shuffleDeck(createDeck(deck));
-  //Empty HTML and reset buttons
-  resetGame();
-  disableBetButtons(false);
-})
-
-//PLACE THE BET
-betButtons.forEach(button =>{
-  button.addEventListener("click", () => {
-    bet = parseInt(button.innerHTML);
-    betDiv.innerHTML = `Bet:  ${bet}`;
-  })
-})
-
-//DEAL CARDS
-dealButton.addEventListener("click", () => {
-  
-  if(bet == 0){
-    messageDiv.innerHTML = "Place a bet first!";
-    return;
-  }
-  if(bet > balance){
-    messageDiv.innerHTML = "Not enough balance to place bet!";
-    return;
-  }
-  messageDiv.innerHTML = "";
-  disableBetButtons(true);
-
-  //Remove after debug
-  dealButton.disabled = true;
-  newGameButton.disabled =true;
-  hitButton.disabled = false;
-  standButton.disabled = false;
-  //Remove after debug
-
-
-  //remove bet from total balance
-  balance -= bet;
-  balanceDiv.innerHTML = `${balance}`;
-  
-  ({ playersHand, dealersHand } = dealCards(deck,3));
-
-  //TOO MUCH REPEATED CODE WHEN DRAWCARD AND DISPLAYING HAND/SCORE
-  //Display dealer's hand
-  dealerScore = getHandScore(dealersHand);
-  updateHandAndScore(dealersHand,dealerScore,dealersHandDiv,dealerScoreDiv);
-  //Display player's hand
-  playerScore = getHandScore(playersHand);
-  updateHandAndScore(playersHand,playerScore,playersHandDiv,playerScoreDiv);
-
-})
-
-//STAND
-standButton.addEventListener("click", () => {
-  //Dealer's turn
-  dealerScore = dealersTurn(dealersHand,deck);
-  balance = endTurn(playersHand,dealersHand,bet,balance);
-});
-
-
-//HIT
-hitButton.addEventListener("click", () => {
-  const card = drawCard(playersHand, deck);
-  const cardValue = getCardValue(card);
-  const playerAces = playersHand.filter(card => card.rank === "Ace").length;
-  playerScore += cardValue;
-
-  while(playerAces > 0 && playerScore > GAME_VALUES.BLACKJACK_SCORE){
-    playerScore -= GAME_VALUES.FACE_CARD_VALUE;
-    playerAces--;
-  }
-  updateHandAndScore(playersHand,playerScore,playersHandDiv,playerScoreDiv);
-
-  if(isBust(playersHand)){
-    balance = endTurn(playersHand,dealersHand,bet,balance);
-  }else if(playerScore == GAME_VALUES.BLACKJACK_SCORE){
-    dealerScore = dealersTurn(dealersHand,deck);
-    balance = endTurn(playersHand,dealersHand,bet,balance);
-  }
-}); */
-
-
