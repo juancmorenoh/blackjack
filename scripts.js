@@ -97,7 +97,7 @@ class Hand {
   }
 
   canSplit(){
-    return this.cards[0].getNumericValue() == this.cards[1].getNumericValue() && this.cards.length == 2;
+    return this.cards[0].value == this.cards[1].value && this.cards.length == 2;
   }
 
   isBlackJack(){
@@ -136,16 +136,21 @@ class Player{
 }
 
 class Slot{
-  hand;
+  hands;
   player;
   bet;
   status;
+  splitBet;
+  activeHandIndex;
+
 
   constructor(player){
-    this.hand = new Hand();
+    this.hands = [new Hand()];
     this.player = player;
     this.bet = 0;
+    this.splitBet = 0;
     this.status = "inactive";
+    this.activeHandIndex = 0;
   }
 
   placeBet(amount){
@@ -156,10 +161,28 @@ class Slot{
     this.player.balance -= amount;
   }
 
-  hit(deck){
-    this.hand.addCard(deck.dealCard());
+  hit(deck,handIndex =0){
+    this.hands[handIndex].addCard(deck.dealCard());
   }
 
+  split(deck){
+    if(!this.hands[0].canSplit() || this.player.balance < this.bet) return false;
+    console.log("inside split function, hand can split")
+    const firstHand = this.hands[0]
+    const secondHand = new Hand();
+
+    secondHand.addCard(firstHand.cards.pop());
+    firstHand.addCard(deck.dealCard());
+    secondHand.addCard(deck.dealCard());
+
+    this.hands.push(secondHand);
+    this.player.balance -= this.bet;
+    //create new splitBet attribute to separate the 2 bets
+    this.splitBet = this.bet;
+
+    
+    return true;
+  }
 }
 
 class Dealer{
@@ -199,6 +222,7 @@ class Game{
     this.dealer = new Dealer();
     this.allSlots = new Array(numSlots).fill(null);
     this.started = false;
+
   }
 
   joinSlot(slotIndex) {
@@ -240,7 +264,7 @@ class Game{
       this.allSlots.forEach((slot,index) =>{
         if(slot != null){
           slot.hit(this.deck);
-          console.log(`Dealt to Slot ${index}: ${slot.hand}`);
+          console.log(`Dealt to Slot ${index}: ${slot.hands[0]}`);
         }
       })
       this.dealer.hand.addCard(this.deck.dealCard()); 
@@ -284,7 +308,7 @@ class Game{
     this.allSlots.filter(slot => slot != null ).forEach(slot => {
       slot.placeBet(slot.bet);
       slot.status = "active";
-      slot.hand = new Hand();
+      slot.hands = [new Hand()];
     });
 
     this.playingSlotsIndexes = this.getPlayingSlotIndexes();
@@ -293,8 +317,8 @@ class Game{
     //Create new hand for dealer
     this.dealer.hand = new Hand();
     //RESET Hands HTML player-dealer
-    document.querySelectorAll(".hand-display").forEach((elment)=>{
-      elment.innerHTML = "";
+    document.querySelectorAll(".hand-display").forEach((element)=>{
+      element.innerHTML = "";
     });
     document.getElementById("dealer-cards").innerHTML = "";
     //Remove insurance message from previous turn if any
@@ -305,14 +329,12 @@ class Game{
     //update balance
     updateDisplayBalance();
     //deal first 2 cards to players and dealer
-    this.dealFirstCards();
+    this.dealFirstCards();                  
     //display player hands in html
-    document.querySelectorAll(".slot").forEach((slotDiv,index) =>{
-      const slot = this.allSlots[index];
-      if(slot != null){
-        slotDiv.querySelector(".hand-display").innerHTML = `${slot.hand}`
-      }
-    })
+    const slots = document.querySelectorAll(".slot");
+    for (let index = 0; index < slots.length; index++) {
+      updateHandDisplay(index);
+    }
     //display dealer hand in html
     this.dealer.displayHand();
     
@@ -329,7 +351,7 @@ class Game{
       //manages all the logic for placing the insurance bet and related HTML
       //updates the player balance
       createInsuranceButton(game.playingSlotsIndexes);
-      updateDisplayBalance();
+      
       setTimeout(handleInsurance,10000);
       
     }else if(this.dealer.hand.isBlackJack()){
@@ -362,31 +384,49 @@ class Game{
     //Remove red border from last slot
     const slotDiv = document.querySelector(`.slot[data-slot="${game.currentSlotIndex}"]`);
     if(slotDiv) slotDiv.classList.remove("active-slot");
+
+    //Reset splitBet to 0
+    //Could use to reset parts of the slots here
+    this.allSlots.forEach((slot,index) => {
+      if (slot) {
+        slot.splitBet = 0;
+        slot.activeHandIndex = 0;
+        slot.status = "inactive";
+
+        const slotDiv = document.querySelector(`.slot[data-slot="${index}"]`);
+        slotDiv.querySelector(".bet-amount").innerHTML = `Bet: ${slot.bet}`;
+      }
+    });
     console.log("END OF THE GAME");
   }
 
   payoutSlots(){
     this.allSlots.forEach((slot, index) => {
       if (slot == null || slot.status == "inactive") return;
-      const dealerScore = this.dealer.hand.score;
-      const playerScore = slot.hand.score;
-  
-      if (playerScore > 21) {
-        console.log(`Slot ${index} busted and lost the bet.`);
-        
-      } else if (dealerScore > 21) {
-        console.log(`Dealer busted! Slot ${index} wins.`);
-        player1.balance += parseInt(slot.bet) * 2; 
-      } else if (playerScore > dealerScore) {
-        console.log(`Slot ${index} wins!`);
-        player1.balance += parseInt(slot.bet)  * 2; 
-      } else if (playerScore < dealerScore) {
-        console.log(`Slot ${index} loses.`);
-        
-      } else {
-        console.log(`Slot ${index} pushes (tie). Bet returned.`);
-        player1.balance += parseInt(slot.bet) ;
-      }
+
+      slot.hands.forEach((hand,handIndex) => {
+        const dealerScore = this.dealer.hand.score;
+        const playerScore = hand.score;
+
+        const handBet = handIndex === 0 ? slot.bet : slot.splitBet;
+
+        if (playerScore > 21) {
+          console.log(`Slot ${index} busted and lost the bet.`);
+          
+        } else if (dealerScore > 21) {
+          console.log(`Dealer busted! Slot ${index} wins.  Hand :${handIndex}`);
+          player1.balance += parseInt(handBet) * 2; 
+        } else if (playerScore > dealerScore) {
+          console.log(`Slot ${index} wins! Hand :${handIndex}`);
+          player1.balance += parseInt(handBet)  * 2; 
+        } else if (playerScore < dealerScore) {
+          console.log(`Slot ${index} loses.  Hand :${handIndex}` );
+          
+        } else {
+          console.log(`Slot ${index} pushes (tie). Bet returned.  Hand :${handIndex}`);
+          player1.balance += parseInt(handBet) ;
+        }
+      })
     });
   }
 
@@ -402,12 +442,17 @@ function payInsurance(){
   })
 }
 
+
+function unToggleDoubleorSplitBtn(idType){
+  const btn = document.querySelector(`[id^='${idType}-btn-']`);
+  if(btn) btn.disabled = false;
+}
+
 //ONLY WHEN DEALER SHOW ACE
 function handleInsurance(){
-  document.querySelectorAll(".actions button").forEach(button =>{
-    button.disabled = false;
-  })
-  
+  toggleActionBtn(false);
+  unToggleDoubleorSplitBtn("double");
+  unToggleDoubleorSplitBtn("split");
   //Remove insurance btn
   const insuranceButtons = document.querySelectorAll(".insurance-btn");
   insuranceButtons.forEach(button => {
@@ -528,23 +573,29 @@ document.getElementById("deal-button").addEventListener("click", function() {
 
 //HIT-STAND-DOUBLE BUTTONS
 document.querySelector(".actions").addEventListener("click", function(event) {
-  
+  //if current slot does not exists, return immediately
+  const currentSlot = game.allSlots[game.currentSlotIndex];
+  if(!currentSlot) return;
+
   if(event.target.id == "hit-button") {
     handlesHit(game.currentSlotIndex);
   }
   if(event.target.id == "stand-button") {
-    console.log(`slot ${game.currentSlotIndex} STAND`)
+    console.log(`Hand ${currentSlot.activeHandIndex} in slot ${game.currentSlotIndex} STAND`)
     nextSlot();
   }
   //If double, nextTurn and handles the bet and updating the HTML
   if(event.target.id == `double-btn-${game.currentSlotIndex}`) {
-    const currentSlot = game.allSlots[game.currentSlotIndex];
+    if(currentSlot.activeHandIndex == 1){
+      alert("Cannot double down on split hand");
+      return;
+    }
     if(currentSlot.player.balance >= currentSlot.bet){
       currentSlot.player.balance -= currentSlot.bet;
       currentSlot.bet *= 2;
       console.log(`Player balance: ${currentSlot.player.balance}`)
       console.log(`total bet: ${currentSlot.bet}`)
-      updateBetDisplay(game.currentSlotIndex, currentSlot.bet);
+      updateBetDisplay(game.currentSlotIndex, `Bet: ${currentSlot.bet}`);
       updateDisplayBalance();
       console.log("One card only");
       currentSlot.hit(game.deck);
@@ -563,21 +614,32 @@ function setUpCurrentSlot(index){
   console.log(`Next turn: Player in Slot ${index}`);
   const currentSlot = game.allSlots[index];
   highlightCurrentSlot(index);
-  if(currentSlot.hand.canDouble()){
+
+  const doubleButton = document.getElementById(`double-btn-${index}`);
+  if (doubleButton) doubleButton.remove();
+  const splitButton = document.getElementById(`split-btn-${index}`);
+  if (splitButton) splitButton.remove();
+
+  if(currentSlot.hands[0].canDouble()){
     createDoubleButton(index);
   }     
+  if(currentSlot.hands[0].canSplit()) {
+    createSplitButton(index);
+  }
 }
 
 
 function handlesHit(currentSlotIndex){
   const currentSlot = game.allSlots[currentSlotIndex];
-  currentSlot.hit(game.deck);
+  const currentHandIndex = currentSlot.activeHandIndex;
+  const currentHand = currentSlot.hands[currentHandIndex];
+  currentSlot.hit(game.deck,currentHandIndex);
   updateHandDisplay(currentSlotIndex);
-  if (currentSlot.hand.score > 21) {  
-    console.log(`Slot ${currentSlotIndex} BUST!`);    
+  if (currentHand.score > 21) {  
+    console.log(`Hand ${currentSlot.activeHandIndex} in Slot ${currentSlotIndex} BUSTED!`);    
     nextSlot();
-  } else if (currentSlot.hand.score === 21) {  
-    console.log(`Slot ${currentSlotIndex} AUTOMATICALLY STAND`);      
+  } else if (currentHand.score === 21) {  
+    console.log(`Hand ${currentSlot.activeHandIndex} in Slot ${currentSlotIndex} AUTOMATICALLY STANDS`);      
     nextSlot();
   }
 }
@@ -586,41 +648,69 @@ function handlesHit(currentSlotIndex){
 function updateHandDisplay(slotIndex) {
   const slotDiv = document.querySelector(`.slot[data-slot="${slotIndex}"]`);
   const playerSlot = game.allSlots[slotIndex];
-
+  
   if (slotDiv && playerSlot) {
-    slotDiv.querySelector(".hand-display").innerHTML = `${playerSlot.hand}`;
+    let handsHTML = "";
+    playerSlot.hands.forEach((hand, index) => {
+
+      //if is second hand, isAcitve becomes a class
+      const isActive = index == playerSlot.activeHandIndex && playerSlot.hands.length > 1 ? "active-split-hand" : "";
+      handsHTML += `<div class="hand-${index} ${isActive}">${hand}</div>`;
+    });
+    slotDiv.querySelector(".hand-display").innerHTML = handsHTML;
   }
 }
 
-function updateBetDisplay(slotIndex, newBet) {
+function updateBetDisplay(slotIndex, newBetMessage) {
   const betDiv = document.querySelector(`.slot[data-slot="${slotIndex}"]`);
-  betDiv.querySelector(".bet-amount").innerHTML = `Bet: ${newBet}`;
+  betDiv.querySelector(".bet-amount").innerHTML = newBetMessage;
 }
+
 
 //Function to move to next slot
 function nextSlot(){
+  const currentSlot = game.allSlots[game.currentSlotIndex];
+  //if slots have multiples hand stay on the same slot move to next hand
+  if(currentSlot.hands.length > 1){
+    currentSlot.activeHandIndex++;
+    if(currentSlot.activeHandIndex < currentSlot.hands.length){
+      console.log(`Move to next hand in slot: ${game.currentSlotIndex}`);
+      updateHandDisplay(game.currentSlotIndex);
+      return;
+    }
+  }
+  //If a hand was split, remove the class from second hand
+  const activeSplitHandClass = document.querySelector(".active-split-hand");
+  if(activeSplitHandClass) activeSplitHandClass.classList.remove("active-split-hand");
+  
+
   //If double btn was crerating, remove before moving to next slot
   const doubleButton = document.getElementById(`double-btn-${game.currentSlotIndex}`);
   if(doubleButton) doubleButton.remove();
 
+  //If split was created, remove before moving to next slot
+  const splitButton = document.getElementById(`split-btn-${game.currentSlotIndex}`);
+  if(splitButton) splitButton.remove();
 
   //remove first element of the array of playing indexes
   const removedIndex = game.playingSlotsIndexes.shift();
   console.log(`NextSlot() was just called and it just removed slot at index ${removedIndex}`);
   console.log(`Remaining slots : ${game.playingSlotsIndexes.length}`)
+  //if there are slots left to play
   if(game.playingSlotsIndexes.length > 0) {
+    //move to next playing index
     game.currentSlotIndex = game.playingSlotsIndexes[0];
     setUpCurrentSlot(game.currentSlotIndex);
   }else{
-    const activePlayersExist = game.allSlots.some(slot => slot && slot.status === "active" && slot.hand.score <= 21);
-    if(activePlayersExist){//some players are still playing
+    const activePlayersExist = game.allSlots.some(slot => slot && slot.status === "active" && slot.hands[0].score <= 21);
+    if(activePlayersExist){//some players are still active and didn't bust
       console.log("All players have finished. Dealer's turn!");
       game.dealer.play(game.deck);
       game.dealer.displayHand();
-    }else{
+    }else{//all playing indexes busted
       console.log("No active players, dealer does not draw cards!");
     }
-    endRound();
+    game.endRound();
   }
 }
 
@@ -636,7 +726,7 @@ function getIndexesBj(slots) {
   let indexWithBj = [];
   slots.forEach((slot, index) => {
     if (slot == null) return;
-    if (slot.hand.isBlackJack()) {
+    if (slot.hands[0].isBlackJack()) {
       indexWithBj.push(index);
     }
   });
@@ -666,13 +756,40 @@ function createDoubleButton(currentSlotIndex){
   //insert in new Buttons div
   document.querySelector(".actions").appendChild(doubleButton);
 }
+function createSplitButton(currentSlotIndex){
+  //Create button split
+  const splitButton = document.createElement("button");
+  splitButton.innerHTML = "Split";
+  splitButton.id = `split-btn-${currentSlotIndex}`;
 
+  //insert in new Buttons div
+  document.querySelector(".actions").appendChild(splitButton);
+
+  splitButton.addEventListener("click",() =>{
+    const currentSlot = game.allSlots[currentSlotIndex];
+  
+    if(currentSlot.split(game.deck)){
+      console.log(`Slot ${currentSlotIndex} split into two hands!`);
+      //split() modifies balance and bet
+      //update balance html
+      updateDisplayBalance()
+      //update bet html
+      const betMessage = `First Hand bet: ${currentSlot.bet}, Second Hand bet: ${currentSlot.splitBet },total bet: ${parseInt(currentSlot.bet) * 2}`;
+      updateBetDisplay(currentSlotIndex, betMessage);
+      //update hand HTML 
+      updateHandDisplay(currentSlotIndex);
+      splitButton.remove();
+    }else{
+      alert("Cannot split this hand");
+    }
+  });
+}
 function createInsuranceButton(arrayOfIndexes){
   arrayOfIndexes.forEach(index =>{
     //If the playing index also has BJ ignore
     //Might later implement with function that pays players wth BJ
     const currentSlot = game.allSlots[index];
-    if(currentSlot.hand.score == 21) return;
+    if(currentSlot.hands[0].score == 21) return;
     //For everyother create the button and give id of the index.
     const insuranceButton = document.createElement("button");
     insuranceButton.innerHTML = "Click to insure";
@@ -692,6 +809,7 @@ function createInsuranceButton(arrayOfIndexes){
         //remove insurance btn
         console.log("Insurance activated");
         currentSlot.player.balance -= insuranceAmount;
+        updateDisplayBalance();
         currentSlot.insurance = insuranceAmount;
         const insuranceDiv = document.createElement("p");
         insuranceDiv.classList.add("insurance-message");
