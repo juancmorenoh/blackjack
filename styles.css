@@ -4,8 +4,7 @@
   box-sizing: border-box;
 }
 body{
-  font-family: Arial, sans-serif; /* You can pick your preferred font */
-  
+  font-family: Arial, sans-serif;
 }
 main{
   background-color: rgb(58, 100, 41);
@@ -35,29 +34,32 @@ h1{
   
 }
 
+/* TOP */
 .dealer{
 
   border: 3px solid red;
   margin: 3px;
-  flex: 1.4;
+  flex: 1.2;
   display: flex;
   justify-content: center;
+  align-items: end;
 }
 
 .dealer div{
   border: 3px solid blue;
-  margin-top: 8rem;
-
-  text-align: center;
-  
+  text-align: bottom;
+  height: 150px;
+  width: 150px;
 }
 
+/* MIDDLE */
 .slots-container{
   border: 3px solid red;
   margin: 3px;
 
-  flex:1;
-  
+  flex: 1;
+  min-height: 150px;
+  flex-shrink: 0;
   display: flex;
   justify-content: center;
 }
@@ -71,16 +73,24 @@ h1{
   flex-direction: column;
   justify-content: center;
   text-align: center;
+  justify-content: space-between;
 }
 
 
+
+.bet-amount{
+  height: 20px;
+}
+
+
+/* LOW */
 .bet-actions-container{
   
   
   border: 3px solid red;
   margin: 5px;
-
-  flex: 0.7;
+  margin-bottom: 20px;
+  height: 150px;
   
 
   display: flex;
@@ -90,8 +100,7 @@ h1{
   border: 3px solid blue;
   margin: 5px;
 
-  max-width: 300px;
-  flex: 0.4;
+  width: 300px;
   
   display: flex;
   flex-direction: column;
@@ -99,8 +108,7 @@ h1{
 .bet-container{
   border: 3px solid red;
   margin: 3px;
-  flex: 2;
-
+  flex: 1;
   display: flex;
   justify-content: space-around;
 }
@@ -113,7 +121,7 @@ h1{
 .balance{
   border: 3px solid red;
   margin: 3px;
-  flex: 1;
+  height: 40px;
 }
 .actions{
   border: 3px solid blue;
