@@ -1,0 +1,134 @@
+*{
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+body{
+  font-family: Arial, sans-serif; /* You can pick your preferred font */
+  
+}
+main{
+  background-color: rgb(58, 100, 41);
+  height: 100vh;
+}
+
+h1{
+  text-align: center;
+  padding-top: 0.7rem;
+}
+
+.table{
+  background-image: url('images/Blackjack-Classic-background.jpg');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center; 
+  
+  width: 90vw;
+  height: 90vh;
+  max-width: 1300px; 
+  
+  border-radius: 1rem;
+  margin: 3px auto; 
+  
+  display: flex;
+  flex-direction: column;
+  
+}
+
+.dealer{
+
+  border: 3px solid red;
+  margin: 3px;
+  flex: 1.4;
+  display: flex;
+  justify-content: center;
+}
+
+.dealer div{
+  border: 3px solid blue;
+  margin-top: 8rem;
+
+  text-align: center;
+  
+}
+
+.slots-container{
+  border: 3px solid red;
+  margin: 3px;
+
+  flex:1;
+  
+  display: flex;
+  justify-content: center;
+}
+.slot{
+  border: 3px solid blue;
+  margin: 5px;
+
+  width: 150px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+
+.bet-actions-container{
+  
+  
+  border: 3px solid red;
+  margin: 5px;
+
+  flex: 0.7;
+  
+
+  display: flex;
+}
+
+.bet-balance-container{
+  border: 3px solid blue;
+  margin: 5px;
+
+  max-width: 300px;
+  flex: 0.4;
+  
+  display: flex;
+  flex-direction: column;
+}
+.bet-container{
+  border: 3px solid red;
+  margin: 3px;
+  flex: 2;
+
+  display: flex;
+  justify-content: space-around;
+}
+
+.bet-button{
+  border: 3px solid blue;
+  margin: 5px;
+  width: 50px;
+}
+.balance{
+  border: 3px solid red;
+  margin: 3px;
+  flex: 1;
+}
+.actions{
+  border: 3px solid blue;
+  margin: 5px;
+
+  flex: 1; 
+
+  display: flex;
+  justify-content: center;
+  
+}
+
+.actions button{
+  border: 3px solid red;
+  margin: 10px;
+  width: 100px;
+}
+
