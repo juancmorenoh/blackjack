@@ -206,8 +206,39 @@ class Dealer{
   }
 
   //Display dealer hand on HTML
-  displayHand(){
-    document.getElementById("dealer-cards").innerHTML = this.hand;
+  displayHand(revealSecondCard = false){
+    const dealerDiv = document.querySelector('.dealer');
+    dealerDiv.innerHTML = '';
+    const handDiv = document.createElement('div');
+    handDiv.classList.add('dealer-hand');
+
+    
+    this.hand.cards.forEach((card,index) =>{
+      const imgElement = document.createElement('img');
+
+      if(!revealSecondCard && index == 1){
+        imgElement.src = "images/cards/back.png";
+      }else{
+        imgElement.src = card.image;
+      }
+      
+      
+      imgElement.classList.add('card');
+      handDiv.appendChild(imgElement);
+    });
+
+    const scoreSpan = document.createElement('span');
+    if(!revealSecondCard){
+      scoreSpan.innerHTML = `${this.hand.cards[0].getNumericValue()}`
+    }else{
+      scoreSpan.innerHTML = `${this.hand.score}`;
+    }
+    
+    scoreSpan.classList.add("score");
+
+    dealerDiv.appendChild(handDiv);
+    handDiv.appendChild(scoreSpan);
+
   }
 
   showAce(){
@@ -327,7 +358,7 @@ class Game{
     document.querySelectorAll(".hand-display").forEach((element)=>{
       element.innerHTML = "";
     });
-    document.getElementById("dealer-cards").innerHTML = "";
+    document.querySelector(".dealer").innerHTML = "";
     //Remove insurance message from previous turn if any
     const insuranceP = document.querySelectorAll(".insurance-message");
     insuranceP.forEach(p => {
@@ -362,6 +393,7 @@ class Game{
       setTimeout(handleInsurance,10000);
       
     }else if(this.dealer.hand.isBlackJack()){
+      
       console.log("Dealer has BJ");
       this.endRound();
     }else{
@@ -378,6 +410,7 @@ class Game{
   } 
 
   endRound(){
+    this.dealer.displayHand(true);
     //pay all active slots
     this.payoutSlots();
     //update balance
@@ -680,6 +713,7 @@ function updateHandDisplay(slotIndex) {
       });
 
       const scoreSpan = document.createElement("span");
+      scoreSpan.classList.add("score");
       scoreSpan.innerHTML = `${hand.score}`;
 
       handDiv.appendChild(handContent);
@@ -736,7 +770,7 @@ function nextSlot(){
     if(activePlayersExist){//some players are still active and didn't bust
       console.log("All players have finished. Dealer's turn!");
       game.dealer.play(game.deck);
-      game.dealer.displayHand();
+      game.dealer.displayHand(true);
     }else{//all playing indexes busted
       console.log("No active players, dealer does not draw cards!");
     }

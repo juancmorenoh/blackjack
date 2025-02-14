@@ -45,12 +45,11 @@ h1{
   align-items: end;
 }
 
-.dealer div{
+
+.dealer-hand{
   border: 3px solid blue;
-  text-align: bottom;
-  height: 150px;
-  width: 150px;
-}
+} 
+
 
 /* MIDDLE */
 .slots-container{
@@ -67,8 +66,6 @@ h1{
   border: 3px solid blue;
   margin: 5px;
   
-  width: 150px;
-
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -90,7 +87,7 @@ h1{
   height: 100px;
 }
 
-.hand-display span{
+.score{
   background-color: black;
   opacity: 0.8;
   border-radius: 10px;
@@ -126,10 +123,11 @@ h1{
   display: flex;
   flex-direction: column;
 }
+/* BET-CHIPS */
 .bet-container{
   border: 3px solid red;
   margin: 3px;
-  flex: 1;
+  flex: 2;
   display: flex;
   justify-content: space-around;
 }
@@ -139,11 +137,30 @@ h1{
   margin: 5px;
   width: 50px;
 }
+
+/* BALANCE */
 .balance{
-  border: 3px solid red;
+  border: 3px solid rgb(175, 173, 66);
   margin: 3px;
-  height: 40px;
+  width: 50%;
+  margin: 3px auto;
+  flex: 1;
+  text-align: center;
+  font-weight: bold;
+  
+  border-radius: 10px;
 }
+.balance p{
+  padding: 2px 0px;
+}
+.balance p:first-child{
+  background-color: rgb(175, 173, 66);
+}
+.balance p:nth-child(2){
+  color: white;
+}
+
+/* ACTIONS */
 .actions{
   border: 3px solid blue;
   margin: 5px;
