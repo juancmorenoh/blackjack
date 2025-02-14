@@ -23,13 +23,11 @@
           </div>
       
           <div class="slot" data-slot="1">
-            <div class="hand-display"></div>
-            
+            <div class="hand-display"></div> 
             <button class="slot-btn" data-slot="1">Join Slot 1</button>
-            
-            
             <span class="bet-amount"></span>
           </div>
+
           <div class="slot" data-slot="0">
             <div class="hand-display"></div>
             <button class="slot-btn" data-slot="0">Join Slot 0</button>  
@@ -42,9 +40,10 @@
         <div class="bet-actions-container">
           <div class="bet-balance-container">
             <div class="bet-container">
-              <button class="bet-button">10</button>
-              <button class="bet-button">20</button>
-              <button class="bet-button">50</button>
+              <button class="bet-button" data-value="10"></button>
+              <button class="bet-button" data-value="25"></button>
+              <button class="bet-button" data-value="50"></button>
+              <button class="bet-button" data-value="100"></button>
             </div> 
             <div class="balance">
               <p>Balance</p>
@@ -53,9 +52,9 @@
           </div>
           
           <div class="actions">
-            <button id="deal-button">Deal Cards</button>
-            <button id="hit-button">Hit</button>
-            <button id="stand-button">Stand</button>
+            <button id="deal-button" data-type="deal">Deal</button>
+            <button id="hit-button" data-type="hit">Hit</button>
+            <button id="stand-button" data-type="stand">Stand</button>
           </div>    
         </div>
         </div>

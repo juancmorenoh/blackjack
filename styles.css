@@ -10,6 +10,11 @@ main{
   background-color: rgb(58, 100, 41);
   height: 100vh;
 }
+button{
+  background:none;
+  border: none;
+  cursor: pointer;
+}
 
 h1{
   text-align: center;
@@ -60,7 +65,8 @@ h1{
   min-height: 150px;
   flex-shrink: 0;
   display: flex;
-  justify-content: space-between;
+  justify-content: space-evenly;
+  align-items: center;
 }
 .slot{
   border: 3px solid blue;
@@ -77,9 +83,11 @@ h1{
   background-color: lightcoral;
   height: 80%;
 }
+
 [class^="hand-"]{
   display: flex;
-  
+  justify-content: end;
+  align-items: end;
 }
 
 .card{
@@ -94,7 +102,7 @@ h1{
   font-size: 20px;
   color: aliceblue;
   padding: 5px;
-  align-self: flex-start;
+  
 }
 .bet-amount{
   height: 20px;
@@ -103,19 +111,12 @@ h1{
 
 /* LOW */
 .bet-actions-container{
-  
-  
-  border: 3px solid red;
-  margin: 5px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   height: 150px;
-  
-
   display: flex;
 }
 
 .bet-balance-container{
-  border: 3px solid blue;
   margin: 5px;
 
   width: 300px;
@@ -125,7 +126,6 @@ h1{
 }
 /* BET-CHIPS */
 .bet-container{
-  border: 3px solid red;
   margin: 3px;
   flex: 2;
   display: flex;
@@ -133,10 +133,14 @@ h1{
 }
 
 .bet-button{
-  border: 3px solid blue;
   margin: 5px;
   width: 50px;
 }
+
+.bet-button img{
+  width: 100%;
+}
+
 
 /* BALANCE */
 .balance{
@@ -162,19 +166,65 @@ h1{
 
 /* ACTIONS */
 .actions{
-  border: 3px solid blue;
-  margin: 5px;
-
   flex: 1; 
-
   display: flex;
   justify-content: center;
+  align-items: center;
   
 }
 
-.actions button{
-  border: 3px solid red;
+/* ACTION BUTTONS */
+.actions button {
   margin: 10px;
-  width: 100px;
+  width: 100px; 
+  height: 100px; 
+  border-radius: 50%;  
+  font-size: 20px; 
+  color: white;
+  font-weight: bold;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+  padding: 0;  
+  
 }
+
+.actions button[data-type="deal"]{
+  background-color: rgb(168, 166, 21);
+}
+.actions button[data-type="hit"]{
+  background-color: rgb(47, 150, 47);
+}
+.actions button[data-type="stand"]{
+  background-color: rgb(189, 69, 69);
+}
+
+.actions button[data-type="split"]{
+  background-color: rgb(44, 68, 146);
+}
+.actions button[data-type="double"]{
+  background-color: rgb(90, 30, 77);
+}
+
+/* Hover effects */
+.actions button:hover {
+  transform: scale(1.1); 
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.actions button:focus {
+  outline: none;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+}
+
+/* Disabled button styling */
+.actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;  
+  box-shadow: none;  
+}
+.actions button:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 

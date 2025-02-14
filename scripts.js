@@ -100,7 +100,7 @@ class Hand {
     return this.calculateScore();
   }
   canDouble(){
-    return this.score > 8 && this.score < 12 && this.cards.length == 2;
+    return this.score > 8 && this.score < 12 && this.cards.length == 2;  
   }
 
   canSplit(){
@@ -410,6 +410,7 @@ class Game{
   } 
 
   endRound(){
+    //show second card when dealer only has 2 cards
     this.dealer.displayHand(true);
     //pay all active slots
     this.payoutSlots();
@@ -579,6 +580,9 @@ document.querySelectorAll(".slot-btn").forEach((btn) => {
 
 //ASSIGN BET TO SLOT
 document.querySelectorAll(".bet-button").forEach((betBtn) => {
+  const chipValue =betBtn.dataset.value;
+  betBtn.innerHTML = `<img src="images/chips/chip-${chipValue}.png" class=chip-icon" >`;
+
   betBtn.addEventListener("click", function () {
     if(game.started){
       alert("Cannot change your bet mid game");
@@ -591,11 +595,12 @@ document.querySelectorAll(".bet-button").forEach((betBtn) => {
       return;  
     }
     const slotIndex = selectedSlot.value;
-    const valueBet = this.innerHTML;
+    const valueBet = this.dataset.value;
+    
     game.allSlots[slotIndex].bet = valueBet;
     
     const betAmountElement = selectedSlot.parentElement.querySelector('.bet-amount');
-    betAmountElement.textContent = `Bet: ${valueBet}`;
+    betAmountElement.textContent = `${valueBet}`;
   });
 });
 
@@ -816,6 +821,7 @@ function createDoubleButton(currentSlotIndex){
   const doubleButton = document.createElement("button");
   doubleButton.innerHTML = "Double";
   doubleButton.id = `double-btn-${currentSlotIndex}`;
+  doubleButton.setAttribute("data-type", "double");
 
   //insert in new Buttons div
   document.querySelector(".actions").appendChild(doubleButton);
@@ -825,6 +831,7 @@ function createSplitButton(currentSlotIndex){
   const splitButton = document.createElement("button");
   splitButton.innerHTML = "Split";
   splitButton.id = `split-btn-${currentSlotIndex}`;
+  splitButton.setAttribute("data-type", "split");
 
   //insert in new Buttons div
   document.querySelector(".actions").appendChild(splitButton);
