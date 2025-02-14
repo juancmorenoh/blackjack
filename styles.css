@@ -56,17 +56,17 @@ h1{
 .slots-container{
   border: 3px solid red;
   margin: 3px;
-
+  gap: 40px;
   flex: 1;
   min-height: 150px;
   flex-shrink: 0;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
 }
 .slot{
   border: 3px solid blue;
   margin: 5px;
-
+  
   width: 150px;
 
   display: flex;
@@ -76,8 +76,29 @@ h1{
   justify-content: space-between;
 }
 
+.hand-display{
+  background-color: lightcoral;
+  height: 80%;
+}
+[class^="hand-"]{
+  display: flex;
+  
+}
 
+.card{
+  width: 70px;
+  height: 100px;
+}
 
+.hand-display span{
+  background-color: black;
+  opacity: 0.8;
+  border-radius: 10px;
+  font-size: 20px;
+  color: aliceblue;
+  padding: 5px;
+  align-self: flex-start;
+}
 .bet-amount{
   height: 20px;
 }

@@ -1,10 +1,12 @@
 class Card {
   suit;
   value;
-  
+  image;
+
   constructor(suit,value){
     this.suit = suit;
     this.value = value;
+    this.image = this.getImagePath();
   }
 
   getNumericValue(){
@@ -13,8 +15,13 @@ class Card {
      else return parseInt(this.value); 
   }
 
+  getImagePath(){
+    const suitInitial = this.suit.charAt(0);
+    return `images/cards/${this.value}${suitInitial}.png`;
+  }
+
   toString() {
-    return `${this.value} of ${this.suit}`;
+    return `${this.value}${this.suit.charAt(0)}`;
   }
 }
 
@@ -109,7 +116,7 @@ class Hand {
   }
 
   toString() {
-    return `[${this.cards.join(", ")}] | Score: ${this.score}`;
+    return `${this.cards}`;
   }
 }
 
@@ -650,16 +657,39 @@ function updateHandDisplay(slotIndex) {
   const playerSlot = game.allSlots[slotIndex];
   
   if (slotDiv && playerSlot) {
-    let handsHTML = "";
-    playerSlot.hands.forEach((hand, index) => {
+    
+    const handDisplay = slotDiv.querySelector(".hand-display");
+    handDisplay.innerHTML = "";
 
-      //if is second hand, isAcitve becomes a class
-      const isActive = index == playerSlot.activeHandIndex && playerSlot.hands.length > 1 ? "active-split-hand" : "";
-      handsHTML += `<div class="hand-${index} ${isActive}">${hand}</div>`;
+    playerSlot.hands.forEach((hand,index) => {
+      const handDiv = document.createElement("div");
+      handDiv.className = `hand-${index}`;
+      //still needs visual representation of what of the 2 hands is playing
+      if (index == playerSlot.activeHandIndex && playerSlot.hands.length > 1) {
+        handDiv.classList.add("active-split-hand");
+      }
+
+      const handContent = document.createElement("div");
+      handContent.classList.add("hand-content");
+
+      hand.cards.forEach(card => {
+        const cardImg = document.createElement("img");
+        cardImg.src = card.image;
+        cardImg.classList.add("card");
+        handContent.appendChild(cardImg);
+      });
+
+      const scoreSpan = document.createElement("span");
+      scoreSpan.innerHTML = `${hand.score}`;
+
+      handDiv.appendChild(handContent);
+      handDiv.appendChild(scoreSpan);
+      handDisplay.appendChild(handDiv);
     });
-    slotDiv.querySelector(".hand-display").innerHTML = handsHTML;
+
   }
 }
+
 
 function updateBetDisplay(slotIndex, newBetMessage) {
   const betDiv = document.querySelector(`.slot[data-slot="${slotIndex}"]`);
