@@ -581,7 +581,7 @@ document.querySelectorAll(".slot-btn").forEach((btn) => {
 //ASSIGN BET TO SLOT
 document.querySelectorAll(".bet-button").forEach((betBtn) => {
   const chipValue =betBtn.dataset.value;
-  betBtn.innerHTML = `<img src="images/chips/chip-${chipValue}.png" class=chip-icon" >`;
+  betBtn.innerHTML = `<img src="images/chips/chip-${chipValue}.png" class=chip-icon>`;
 
   betBtn.addEventListener("click", function () {
     if(game.started){
@@ -598,7 +598,7 @@ document.querySelectorAll(".bet-button").forEach((betBtn) => {
     const valueBet = this.dataset.value;
     
     game.allSlots[slotIndex].bet = valueBet;
-    
+    updateBetDisplay(slotIndex, valueBet);
     const betAmountElement = selectedSlot.parentElement.querySelector('.bet-amount');
     betAmountElement.textContent = `${valueBet}`;
   });
@@ -640,7 +640,7 @@ document.querySelector(".actions").addEventListener("click", function(event) {
       currentSlot.bet *= 2;
       console.log(`Player balance: ${currentSlot.player.balance}`)
       console.log(`total bet: ${currentSlot.bet}`)
-      updateBetDisplay(game.currentSlotIndex, `Bet: ${currentSlot.bet}`);
+      //updateBetDisplay(game.currentSlotIndex, `Bet: ${currentSlot.bet}`);
       updateDisplayBalance();
       console.log("One card only");
       currentSlot.hit(game.deck);
@@ -730,9 +730,39 @@ function updateHandDisplay(slotIndex) {
 }
 
 
-function updateBetDisplay(slotIndex, newBetMessage) {
-  const betDiv = document.querySelector(`.slot[data-slot="${slotIndex}"]`);
+function updateBetDisplay(slotIndex, betAmount) {
+  const slotDiv = document.querySelector(`.slot[data-slot="${slotIndex}"]`);
+  let betDiv = slotDiv.querySelector('.bet-amount');
+  if (!betDiv) {
+    betDiv = document.createElement("div");
+    betDiv.classList.add("bet-amount");
+    slotDiv.appendChild(betDiv);
+  }
+  const chips = calculateNumberOfChips(betAmount);
+  betDiv.innerHTML = "";
+  Object.entries(chips).forEach(([chipValue, count]) => {
+    for (let i = 0; i < count; i++) {
+        const chipImg = document.createElement("img");
+        chipImg.src = `images/chips/chip-${chipValue}.png`;
+        chipImg.classList.add("chip-icon");
+        betDiv.appendChild(chipImg);
+    }
+  });
   betDiv.querySelector(".bet-amount").innerHTML = newBetMessage;
+}
+
+function calculateNumberOfChips(betAmount){
+  const chipValues= [100,50,25,10,5];
+  let remaining = betAmount;
+  let chips = {};
+  for(let chip of chipValues){
+    if(remaining >= chip){
+      let count = Math.floor(remaining / chip);
+      chips[chip] = count;
+      remaining -= chip * count;
+    }
+  }
+  return chips;
 }
 
 
@@ -846,7 +876,7 @@ function createSplitButton(currentSlotIndex){
       updateDisplayBalance()
       //update bet html
       const betMessage = `First Hand bet: ${currentSlot.bet}, Second Hand bet: ${currentSlot.splitBet },total bet: ${parseInt(currentSlot.bet) * 2}`;
-      updateBetDisplay(currentSlotIndex, betMessage);
+      //updateBetDisplay(currentSlotIndex, betMessage);
       //update hand HTML 
       updateHandDisplay(currentSlotIndex);
       splitButton.remove();
