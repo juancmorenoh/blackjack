@@ -413,10 +413,11 @@ class Game{
 
     //the current slot is the first active slot of playingIndexes
     if (game.allSlots.some(slot => slot != null && slot.status == "active")) {
-      this.currentSlotIndex = this.playingSlotsIndexes.find(index => this.allSlots[index].status == "active");
-    console.log(game.allSlots);
-
-    setUpCurrentSlot(this.currentSlotIndex);
+      this.playingSlotsIndexes = this.getPlayingSlotIndexes();
+      this.currentSlotIndex = this.playingSlotsIndexes[0];
+      console.log(game.allSlots);
+      
+      setUpCurrentSlot(this.currentSlotIndex);
     }
     
     
@@ -575,6 +576,17 @@ document.getElementById("start-form").addEventListener("submit", function(event)
   document.querySelector(".overlay").style.display = "none";
 });
 
+//Remove any Split-Double btn when resetting the game
+function resetActionButtons() {
+  const actionsContainer = document.querySelector('.actions');
+  const actionButtons = actionsContainer.querySelectorAll('button');
+  if (actionButtons.length > 3) {
+    for (let i = 3; i < actionButtons.length; i++) {
+      actionButtons[i].remove();
+    }
+  }
+}
+
 //Dinamically creates slots based on the parameter
 function createSlots(numberSlots){
   const slotsContainer = document.querySelector(".slots-container");
@@ -615,6 +627,7 @@ function topLeftCorner(){
   resetButton.addEventListener("click", function() {
     console.log("Resetting the game...");
     topLeftCorner.remove();
+    resetActionButtons();
     document.querySelector(".dealer").innerHTML = "";
     const overlay = document.querySelector(".overlay");
     overlay.style.display = "flex";
