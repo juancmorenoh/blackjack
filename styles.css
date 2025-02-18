@@ -79,7 +79,7 @@ h1{
   content: "▼";
   position: absolute;
   top: -25px; 
-  left: 50%;
+  left: 40%;
   
   font-size: 25px;
   color: rgb(168, 166, 21); 
@@ -107,8 +107,9 @@ h1{
   color: white;
   font-size: 14px;
 }
+
 .hand-display{
-  
+
   height: 80%;
   display: flex;
   gap: 10px;
@@ -120,9 +121,15 @@ h1{
   align-items: end;
 }
 
-.card{
+.card, .card-player{
   width: 70px;
   height: 100px;
+}
+.card-player:first-child {
+  margin-left: 0px;
+}
+.card-player{
+  margin-left: -50px;
 }
 
 .score{
@@ -132,7 +139,8 @@ h1{
   font-size: 20px;
   color: aliceblue;
   padding: 5px;
-  
+  margin-left: -20px;
+  margin-bottom: -10px;
 }
 
 

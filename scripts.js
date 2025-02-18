@@ -732,10 +732,10 @@ function updateHandDisplay(slotIndex) {
       const handContent = document.createElement("div");
       handContent.classList.add("hand-content");
 
-      hand.cards.forEach(card => {
+      hand.cards.forEach((card) => {
         const cardImg = document.createElement("img");
         cardImg.src = card.image;
-        cardImg.classList.add("card");
+        cardImg.classList.add("card-player");
         handContent.appendChild(cardImg);
       });
 
@@ -750,6 +750,7 @@ function updateHandDisplay(slotIndex) {
 
   }
 }
+
 
 
 function updateBetDisplay(slotIndex, betAmount) {
