@@ -100,12 +100,11 @@ class Hand {
     return this.calculateScore();
   }
   canDouble(){
-    //return this.score > 3
     return this.score > 8 && this.score < 12 && this.cards.length == 2;  
   }
 
   canSplit(){
-    return this.cards[0].value != this.cards[1].value && this.cards.length == 2;
+    return this.cards[0].value == this.cards[1].value && this.cards.length == 2;
   }
 
   isBlackJack(){
@@ -255,8 +254,8 @@ class Game{
   dealer;
   player;
 
-  constructor(player, numSlots){
-    this.deck = new Deck(6);  
+  constructor(player, numSlots, numDecks){
+    this.deck = new Deck(numDecks);  
     this.player = player;
     this.dealer = new Dealer();
     this.allSlots = new Array(numSlots).fill(null);
@@ -351,7 +350,7 @@ class Game{
     });
 
     this.playingSlotsIndexes = this.getPlayingSlotIndexes();
-    this.currentSlotIndex = this.playingSlotsIndexes[0];
+    
 
     //Create new hand for dealer
     this.dealer.hand = new Hand();
@@ -377,7 +376,7 @@ class Game{
     //display dealer hand in html
     this.dealer.displayHand();
     
-    setUpCurrentSlot(this.currentSlotIndex);
+    
 
     //check dealer Ace
     if(this.dealer.showAce()){
@@ -389,7 +388,7 @@ class Game{
       //create button and event listener
       //manages all the logic for placing the insurance bet and related HTML
       //updates the player balance
-      createInsuranceButton(game.playingSlotsIndexes);
+      createInsuranceButton(this.playingSlotsIndexes);
       
       setTimeout(handleInsurance,10000);
       
@@ -406,6 +405,12 @@ class Game{
         this.endRound();
       }
     }
+
+    //the current slot is the first active slot of playingIndexes
+    this.currentSlotIndex = this.playingSlotsIndexes.find(index => this.allSlots[index].status == "active");
+    console.log(game.allSlots);
+
+    setUpCurrentSlot(this.currentSlotIndex);
     
     
   } 
@@ -460,16 +465,16 @@ class Game{
           
         } else if (dealerScore > 21) {
           console.log(`Dealer busted! Slot ${index} wins.  Hand :${handIndex}`);
-          player1.balance += parseInt(handBet) * 2; 
+          this.player.balance += parseInt(handBet) * 2; 
         } else if (playerScore > dealerScore) {
           console.log(`Slot ${index} wins! Hand :${handIndex}`);
-          player1.balance += parseInt(handBet)  * 2; 
+          this.player.balance += parseInt(handBet)  * 2; 
         } else if (playerScore < dealerScore) {
           console.log(`Slot ${index} loses.  Hand :${handIndex}` );
           
         } else {
           console.log(`Slot ${index} pushes (tie). Bet returned.  Hand :${handIndex}`);
-          player1.balance += parseInt(handBet) ;
+          this.player.balance += parseInt(handBet) ;
         }
       })
     });
@@ -530,12 +535,28 @@ function handleInsurance(){
   }
 }
 
-const player1 = new Player("Luca");
-player1.addBalance(100);
-const game = new Game(player1,3);
-updateDisplayBalance();
-toggleActionBtn(true);
+let game;
 
+//event listener for the initial form
+document.getElementById("start-form").addEventListener("submit", function() {
+  const playerName = document.getElementById("player-name").value;
+  const playerBalance = parseFloat(document.getElementById("player-balance").value);
+  const numberDecks = parseFloat(document.getElementById("number-decks").value);
+
+  if (isNaN(playerBalance) || playerBalance <= 0 || playerBalance > 1000) {
+    alert("Please enter a valid balance!");
+    return;
+  } 
+
+  const player = new Player(playerName);
+  player.addBalance(playerBalance);
+  game = new Game(player, 3, numberDecks);
+
+  updateDisplayBalance();
+  toggleActionBtn(true);
+
+  document.querySelector(".overlay").remove(); // Enable interactions
+});
 
 function toggleActionBtn(boolean){
   document.getElementById("hit-button").disabled = boolean;
@@ -963,7 +984,7 @@ function createInsuranceButton(arrayOfIndexes){
         currentSlot.insurance = insuranceAmount;
         const insuranceDiv = document.createElement("p");
         insuranceDiv.classList.add("insurance-message");
-        insuranceDiv.innerHTML = `Insured for $${insuranceAmount}`;
+        insuranceDiv.innerHTML = `Insured for ${insuranceAmount}`;
         parentDiv.appendChild(insuranceDiv);
         insuranceButton.remove();
       }else{
