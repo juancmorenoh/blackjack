@@ -41,8 +41,6 @@ h1{
 
 /* TOP */
 .dealer{
-
-  border: 3px solid red;
   margin: 3px;
   flex: 1.2;
   display: flex;
@@ -51,14 +49,9 @@ h1{
 }
 
 
-.dealer-hand{
-  border: 3px solid blue;
-} 
-
 
 /* MIDDLE */
 .slots-container{
-  border: 3px solid red;
   margin: 3px;
   gap: 40px;
   flex: 1;
@@ -69,7 +62,6 @@ h1{
   align-items: center;
 }
 .slot{
-  border: 3px solid blue;
   margin: 5px;
   
   display: flex;
@@ -79,9 +71,47 @@ h1{
   justify-content: space-between;
 }
 
+.active-slot {
+  position: relative;
+}
+
+.active-slot::before {
+  content: "▼";
+  position: absolute;
+  top: -25px; 
+  left: 50%;
+  
+  font-size: 25px;
+  color: rgb(168, 166, 21); 
+}
+
+.active-split-hand {
+  position: relative; 
+}
+.active-split-hand::before {
+  content: "▼";
+  position: absolute;
+  top: -25px; 
+  left: 40%;
+  
+  font-size: 25px;
+  color: rgb(25, 136, 52); 
+}
+
+.total-bet{
+  background-color: rgb(168, 166, 21);
+  display: inline-block;
+  padding: 3px;
+  margin-bottom: 4px;
+  border-radius: 5px;
+  color: white;
+  font-size: 14px;
+}
 .hand-display{
-  background-color: lightcoral;
+  
   height: 80%;
+  display: flex;
+  gap: 10px;
 }
 
 [class^="hand-"]{
