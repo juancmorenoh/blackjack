@@ -29,7 +29,7 @@ class Deck {
   cards;
   numberOfDecks;
 
-  constructor(numberOfDekcs = 1){
+  constructor(numberOfDekcs){
     this.cards = [];
     this.numberOfDekcs = numberOfDekcs;
     this.createDeck();
@@ -54,6 +54,10 @@ class Deck {
       const j = Math.floor(Math.random() * (i + 1));
       [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];
     }
+  }
+
+  get cardsLeft(){
+    return this.cards.length;  
   }
 
 
@@ -260,6 +264,7 @@ class Game{
     this.dealer = new Dealer();
     this.allSlots = new Array(numSlots).fill(null);
     this.started = false;
+    this.numDecks = numDecks;
 
   }
 
@@ -283,8 +288,8 @@ class Game{
     if(this.allSlots.filter(slot => slot != null).length == 0){
       alert("Please select at least one slot");
       return false;
-    }else if((this.deck.cards.length < 52)){
-      alert("Not enough cards in the deck. Please reset the game");
+    }else if(this.deck.cardsLeft < (this.numDecks * 52 / 2) || this.deck.cardsLeft < 52){
+      alert("Not enough cards in the deck. Shuffle decks");
       return false;
     }else if(!this.isValidBet()){
       alert("Not enough money");
@@ -446,8 +451,12 @@ class Game{
         slotDiv.querySelector(".bet-amount").innerHTML = `Bet: ${slot.bet}`; */
       }
     });
+
+    //Update cards left in the shoe
+    document.querySelector(".cards-left").innerHTML = `Cards in the shoe ${game.deck.cardsLeft}`;
     console.log("END OF THE GAME");
   }
+
 
   payoutSlots(){
     this.allSlots.forEach((slot, index) => {
@@ -555,6 +564,7 @@ document.getElementById("start-form").addEventListener("submit", function(event)
   game = new Game(player, 3, numberDecks);
 
   createSlots(numberSlots);
+  topLeftCorner();
 
   updateDisplayBalance();
   toggleActionBtn(true);
@@ -562,7 +572,7 @@ document.getElementById("start-form").addEventListener("submit", function(event)
   document.querySelector(".overlay").remove(); // Enable interactions
 });
 
-//Dinamiccally creates slots based on the parameter
+//Dinamically creates slots based on the parameter
 function createSlots(numberSlots){
   const slotsContainer = document.querySelector(".slots-container");
   slotsContainer.innerHTML = "";
@@ -586,7 +596,19 @@ function toggleActionBtn(boolean){
   document.getElementById("deal-button").disabled = !boolean;
 }
 
-//ASSIGN SLOT
+//function to create the top left container
+function topLeftCorner(){
+  const tableDiv = document.querySelector(".table");
+  const topRightCorner = document.createElement("div");
+  topRightCorner.classList.add("top-right-corner");
+  topRightCorner.innerHTML = `<p class="player-name">Welcome ${game.player.name}</p>
+  <p>Number of decks: ${game.numDecks}</p>
+  <p class="cards-left">Cards in the shoe: ${game.deck.cardsLeft}</p>
+  <button class="reset-game">Reset game</button>`;
+
+  tableDiv.prepend(topRightCorner);
+}
+  //ASSIGN SLOT
 document.querySelector(".slots-container").addEventListener("click", function(event) {
   if(event.target && event.target.classList.contains("slot-btn")){
     if(game.started){
