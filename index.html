@@ -19,13 +19,13 @@
             <input type="number" id="player-balance" placeholder="50-500">
           </div>
 
-          <!-- <div class="form-entry">
-            <label for="number-slots">Number of Slots:</label>
-            <input type="number" id="number-slots" required>
-          </div> -->
+          <div class="form-entry">
+            <label for="number-slots">Number of Slots: (1 - 6)</label>
+            <input type="number" id="number-slots" min="1" max="6" value="3" required>
+          </div>
 
           <div class="form-entry">
-            <label for="number-decks">Number of Decks:</label>
+            <label for="number-decks">Number of Decks: (1 - 8)</label>
             <input type="number" id="number-decks" min="1" max="8" value="6" required>
           </div>
 
@@ -41,28 +41,7 @@
         
         <!-- Vertical layout 2st row -->
         <div class="slots-container">
-          <div class="slot" data-slot="2">
-            <div class="hand-display"></div> 
-            <div class="radio-container">
-              <button class="slot-btn" data-slot="2">+</button>
-            </div>
-          </div>
-      
-          <div class="slot" data-slot="1">
-            <div class="hand-display"></div> 
-            <div class="radio-container">
-              <button class="slot-btn" data-slot="1">+</button>
-            </div>
-          </div>
-
-          <div class="slot" data-slot="0">
-            <div class="hand-display"></div> 
-            <div class="radio-container">
-              <button class="slot-btn" data-slot="0">+</button>
-            </div>
-          </div>  
-          
-        </div>.
+        </div>
 
         <!-- Vertical layout 3st row -->
         <div class="bet-actions-container">

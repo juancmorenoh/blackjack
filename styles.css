@@ -23,11 +23,11 @@ h1{
 
 .overlay{
   position: fixed;
-  top: 300px;
-  bottom: 300px;
-  left: 200px;
-  right: 200px;
-
+  top: 100px;
+  bottom: 100px;
+  left: 100px;
+  right: 100px;
+  min-width: 300px;
   background: rgba(0, 0, 0, 0.8);
   display: flex;
   justify-content: center;

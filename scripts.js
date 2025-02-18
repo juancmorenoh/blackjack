@@ -538,12 +538,14 @@ function handleInsurance(){
 let game;
 
 //event listener for the initial form
-document.getElementById("start-form").addEventListener("submit", function() {
+document.getElementById("start-form").addEventListener("submit", function(event) {
+  event.preventDefault();
   const playerName = document.getElementById("player-name").value;
   const playerBalance = parseFloat(document.getElementById("player-balance").value);
   const numberDecks = parseFloat(document.getElementById("number-decks").value);
+  const numberSlots = parseInt(document.getElementById("number-slots").value);
 
-  if (isNaN(playerBalance) || playerBalance <= 0 || playerBalance > 1000) {
+  if (isNaN(playerBalance) || playerBalance < 50 || playerBalance > 500) {
     alert("Please enter a valid balance!");
     return;
   } 
@@ -552,12 +554,32 @@ document.getElementById("start-form").addEventListener("submit", function() {
   player.addBalance(playerBalance);
   game = new Game(player, 3, numberDecks);
 
+  createSlots(numberSlots);
+
   updateDisplayBalance();
   toggleActionBtn(true);
 
   document.querySelector(".overlay").remove(); // Enable interactions
 });
 
+//Dinamiccally creates slots based on the parameter
+function createSlots(numberSlots){
+  const slotsContainer = document.querySelector(".slots-container");
+  slotsContainer.innerHTML = "";
+
+  for(let i = numberSlots - 1; i >= 0; i--){
+    const slotDiv = document.createElement("div");
+    slotDiv.classList.add("slot");
+    slotDiv.setAttribute("data-slot", i);
+
+    slotDiv.innerHTML = `
+    <div class="hand-display"></div>
+    <div class="radio-container">
+    <button class="slot-btn" data-slot="${i}">+</button>
+    </div>`;
+    slotsContainer.appendChild(slotDiv);
+  }
+}
 function toggleActionBtn(boolean){
   document.getElementById("hit-button").disabled = boolean;
   document.getElementById("stand-button").disabled = boolean;
@@ -565,22 +587,20 @@ function toggleActionBtn(boolean){
 }
 
 //ASSIGN SLOT
-document.querySelectorAll(".slot-btn").forEach((btn) => {
-  btn.addEventListener("click", function() {
-    console.log("clicked");
-    
+document.querySelector(".slots-container").addEventListener("click", function(event) {
+  if(event.target && event.target.classList.contains("slot-btn")){
     if(game.started){
       alert("Cannot remove or add slots mid game");
       return;
     }
-    const slotIndex = this.getAttribute("data-slot");
+    const slotIndex = event.target.getAttribute("data-slot");
     const slotDiv = document.querySelector(`.slot[data-slot="${slotIndex}"]`);
     const radioDiv = slotDiv.querySelector('.radio-container');
 
     if(game.joinSlot(slotIndex)) {
         console.log(`slot ${slotIndex} created`);
-        this.textContent = `-`;
-        this.classList.add("remove");
+        event.target.textContent = `-`;;
+        event.target.classList.add("remove");
 
         const radioInput = document.createElement("input");
         radioInput.type = "radio";
@@ -598,7 +618,7 @@ document.querySelectorAll(".slot-btn").forEach((btn) => {
         
     }else{
       
-      this.classList.remove("remove");
+      event.target.classList.remove("remove");
       console.log(`slot ${slotIndex} removed`);
       //remove radio input
       const radio = document.querySelector(`input[id="slot-${slotIndex}"]`);
@@ -613,14 +633,13 @@ document.querySelectorAll(".slot-btn").forEach((btn) => {
 
       const handDiv = slotDiv.querySelector('.hand-display');
       if (handDiv) handDiv.textContent = "";
-      this.innerHTML = `+`; // Reset button text
+      event.target.innerHTML = `+`; // Reset button text
       
     }  
-    
-  });
-
+  };
 });
 
+  
 //ASSIGN BET TO SLOT
 document.querySelectorAll(".bet-button").forEach((betBtn) => {
   const chipValue =betBtn.dataset.value;
