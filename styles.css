@@ -104,11 +104,61 @@ h1{
   padding: 5px;
   
 }
-.bet-amount{
-  height: 20px;
+
+
+/* Add-remove slot */
+.slot-btn {
+  background-color: #28a745;
+  opacity: 0.7;
+  color: white; 
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 8px;
+  width: 40px;
+  height: 60px;
+  align-self: center;
+  
 }
 
+.slot-btn:hover {
+  background-color: #88998c;
+}
+.radio-container{
+  position: relative;
+  max-width: 100px;
+  align-self: center;
+}
+.remove {
+  background-color: #ff0000; 
+  width: 18px;
+  height: 18px;
+  position: absolute;
+  bottom: -5px;
+  right: -10px;
+  opacity: 1;
+}
 
+/* Radio btn */
+input[type="radio"] {
+  display: none;
+ 
+}
+
+input[type="radio"] + label {
+  display: inline-block;
+  padding: 8px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  background-color: white;
+  color: #4CAF50;
+  font-weight: bold;
+  transition: 0.3s;
+  
+}
+input[type="radio"]:checked + label {
+  background-color: #4CAF50;
+  color: white;
+}
 /* LOW */
 .bet-actions-container{
   margin-bottom: 10px;
@@ -132,11 +182,19 @@ h1{
   justify-content: space-around;
 }
 
-.chip-icon{
-  width: 50px;
-  margin: 5px;
+.bet-amount img{
+  width: 35px;
+  
 }
 
+.bet-button{
+  margin: 5px;
+  width: 50px;
+}
+
+.bet-button img{
+  width: 100%;
+}
 
 /* BALANCE */
 .balance{

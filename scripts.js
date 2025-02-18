@@ -100,7 +100,8 @@ class Hand {
     return this.calculateScore();
   }
   canDouble(){
-    return this.score > 8 && this.score < 12 && this.cards.length == 2;  
+    return this.score > 3
+    //return this.score > 8 && this.score < 12 && this.cards.length == 2;  
   }
 
   canSplit(){
@@ -433,9 +434,11 @@ class Game{
         slot.splitBet = 0;
         slot.activeHandIndex = 0;
         slot.status = "inactive";
+        slot.doubleBet = undefined;
 
-        const slotDiv = document.querySelector(`.slot[data-slot="${index}"]`);
-        slotDiv.querySelector(".bet-amount").innerHTML = `Bet: ${slot.bet}`;
+        updateBetDisplay(index, slot.bet)
+        /* const slotDiv = document.querySelector(`.slot[data-slot="${index}"]`);
+        slotDiv.querySelector(".bet-amount").innerHTML = `Bet: ${slot.bet}`; */
       }
     });
     console.log("END OF THE GAME");
@@ -550,27 +553,45 @@ document.querySelectorAll(".slot-btn").forEach((btn) => {
     }
     const slotIndex = this.getAttribute("data-slot");
     const parentDiv = this.parentElement;
+    const slotDiv = document.querySelector(`.slot[data-slot="${slotIndex}"]`);
 
     if(game.joinSlot(slotIndex)) {
         console.log(`slot ${slotIndex} created`);
-        this.textContent = `Playing by ${game.player.name}`;
-        //using innetHTML override the listener when changing is content, insertAjacentHTML instead
-        this.insertAdjacentHTML("afterend", `<input type="radio" id="slot-${slotIndex}" name="bet-slot" value=${slotIndex}>`);
+        this.textContent = `-`;
+        this.classList.add("remove");
+
+        const radioInput = document.createElement("input");
+        radioInput.type = "radio";
+        radioInput.id = `slot-${slotIndex}`;
+        radioInput.name = "bet-slot";
+        radioInput.value = slotIndex;
+        
+        const radioLabel = document.createElement("label");
+        radioLabel.htmlFor = `slot-${slotIndex}`;
+        radioLabel.textContent = `Slot ${slotIndex}`;
+        radioLabel.classList.add("slot-label");
+
+        parentDiv.appendChild(radioInput);
+        parentDiv.appendChild(radioLabel)
         
     }else{
+      
+      this.classList.remove("remove");
       console.log(`slot ${slotIndex} removed`);
       //remove radio input
-      const radio = parentDiv.querySelector(`input[id="slot-${slotIndex}"]`);
+      const radio = document.querySelector(`input[id="slot-${slotIndex}"]`);
       if(radio) radio.remove();
+      const label = document.querySelector(`label[for="slot-${slotIndex}"]`);
+      if (label) label.remove();
 
       
       //remove bet from HTML
-      const betAmountElement = parentDiv.querySelector('.bet-amount');
-      if (betAmountElement) betAmountElement.textContent = "";
+      const betAmountElement = slotDiv.querySelector('.bet-amount');
+      if (betAmountElement) betAmountElement.remove();
 
-      const handDiv = parentDiv.querySelector('.hand-display');
+      const handDiv = slotDiv.querySelector('.hand-display');
       if (handDiv) handDiv.textContent = "";
-      this.innerHTML = `Join Slot ${slotIndex}`; // Reset button text
+      this.innerHTML = `+`; // Reset button text
       
     }  
     
@@ -599,8 +620,7 @@ document.querySelectorAll(".bet-button").forEach((betBtn) => {
     
     game.allSlots[slotIndex].bet = valueBet;
     updateBetDisplay(slotIndex, valueBet);
-    const betAmountElement = selectedSlot.parentElement.querySelector('.bet-amount');
-    betAmountElement.textContent = `${valueBet}`;
+    
   });
 });
 
@@ -637,10 +657,11 @@ document.querySelector(".actions").addEventListener("click", function(event) {
     }
     if(currentSlot.player.balance >= currentSlot.bet){
       currentSlot.player.balance -= currentSlot.bet;
-      currentSlot.bet *= 2;
+      //currentSlot.bet *= 2;
+      currentSlot.doubleBet = currentSlot.bet;//
       console.log(`Player balance: ${currentSlot.player.balance}`)
-      console.log(`total bet: ${currentSlot.bet}`)
-      //updateBetDisplay(game.currentSlotIndex, `Bet: ${currentSlot.bet}`);
+      console.log(`Starting bet : ${currentSlot.bet}, double bet : ${currentSlot.doubleBet}`)
+      updateBetDisplay(game.currentSlotIndex, currentSlot.bet);
       updateDisplayBalance();
       console.log("One card only");
       currentSlot.hit(game.deck);
@@ -731,12 +752,14 @@ function updateHandDisplay(slotIndex) {
 
 
 function updateBetDisplay(slotIndex, betAmount) {
+  const slot = game.allSlots[slotIndex];
   const slotDiv = document.querySelector(`.slot[data-slot="${slotIndex}"]`);
+  const referenceElement = slotDiv.querySelector(".hand-display");
   let betDiv = slotDiv.querySelector('.bet-amount');
   if (!betDiv) {
     betDiv = document.createElement("div");
     betDiv.classList.add("bet-amount");
-    slotDiv.appendChild(betDiv);
+    referenceElement.insertAdjacentElement("afterend",betDiv);
   }
   const chips = calculateNumberOfChips(betAmount);
   betDiv.innerHTML = "";
@@ -748,7 +771,18 @@ function updateBetDisplay(slotIndex, betAmount) {
         betDiv.appendChild(chipImg);
     }
   });
-  betDiv.querySelector(".bet-amount").innerHTML = newBetMessage;
+  if (slot.doubleBet) {
+    const doubleChips = calculateNumberOfChips(slot.doubleBet);
+    Object.entries(doubleChips).forEach(([chipValue, count]) => {
+      for (let i = 0; i < count; i++) {
+        const chipImg = document.createElement("img");
+        chipImg.src = `images/chips/chip-${chipValue}.png`;
+        chipImg.classList.add("chip-icon");
+        betDiv.appendChild(chipImg);
+      }
+    });
+  }
+  
 }
 
 function calculateNumberOfChips(betAmount){
