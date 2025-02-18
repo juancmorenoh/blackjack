@@ -549,7 +549,7 @@ function handleInsurance(){
 
 let game;
 
-//event listener for the initial form
+//START GAME INITIAL FORM
 document.getElementById("start-form").addEventListener("submit", function(event) {
   event.preventDefault();
   const playerName = document.getElementById("player-name").value;
@@ -572,7 +572,7 @@ document.getElementById("start-form").addEventListener("submit", function(event)
   updateDisplayBalance();
   toggleActionBtn(true);
 
-  document.querySelector(".overlay").remove(); // Enable interactions
+  document.querySelector(".overlay").style.display = "none";
 });
 
 //Dinamically creates slots based on the parameter
@@ -602,14 +602,25 @@ function toggleActionBtn(boolean){
 //function to create the top left container
 function topLeftCorner(){
   const tableDiv = document.querySelector(".table");
-  const topRightCorner = document.createElement("div");
-  topRightCorner.classList.add("top-right-corner");
-  topRightCorner.innerHTML = `<p class="player-name">Welcome ${game.player.name}</p>
+  const topLeftCorner = document.createElement("div");
+  topLeftCorner.classList.add("top-right-corner");
+  topLeftCorner.innerHTML = `<p class="player-name">Welcome ${game.player.name}</p>
   <p>Number of decks: ${game.numDecks}</p>
   <p class="cards-left">Cards in the shoe: ${game.deck.cardsLeft}</p>
   <button class="reset-game">Reset game</button>`;
 
-  tableDiv.prepend(topRightCorner);
+  tableDiv.prepend(topLeftCorner);
+
+  const resetButton = document.querySelector(".reset-game");
+  resetButton.addEventListener("click", function() {
+    console.log("Resetting the game...");
+    topLeftCorner.remove();
+    document.querySelector(".dealer").innerHTML = "";
+    const overlay = document.querySelector(".overlay");
+    overlay.style.display = "flex";
+    document.getElementById("start-form").reset();
+    game = null;
+  });
 }
 
 
@@ -617,6 +628,10 @@ function updateCardsLenght(){
   document.querySelector(".cards-left").innerHTML = `Cards in the shoe: ${game.deck.cardsLeft}`;
 }
 
+/* document.querySelector(".reset-game").addEventListener("click", function(){
+  const overlay = document.querySelector(".overlay");
+  overlay.style.display = "flex";
+}) */
 
 //SHUFFLE CLICK
 document.querySelector(".shuffle").addEventListener("click", function() {
