@@ -412,10 +412,13 @@ class Game{
     }
 
     //the current slot is the first active slot of playingIndexes
-    this.currentSlotIndex = this.playingSlotsIndexes.find(index => this.allSlots[index].status == "active");
+    if (game.allSlots.some(slot => slot != null && slot.status == "active")) {
+      this.currentSlotIndex = this.playingSlotsIndexes.find(index => this.allSlots[index].status == "active");
     console.log(game.allSlots);
 
     setUpCurrentSlot(this.currentSlotIndex);
+    }
+    
     
     
   } 
@@ -453,7 +456,7 @@ class Game{
     });
 
     //Update cards left in the shoe
-    document.querySelector(".cards-left").innerHTML = `Cards in the shoe ${game.deck.cardsLeft}`;
+    updateCardsLenght();
     console.log("END OF THE GAME");
   }
 
@@ -608,6 +611,24 @@ function topLeftCorner(){
 
   tableDiv.prepend(topRightCorner);
 }
+
+
+function updateCardsLenght(){
+  document.querySelector(".cards-left").innerHTML = `Cards in the shoe: ${game.deck.cardsLeft}`;
+}
+
+
+//SHUFFLE CLICK
+document.querySelector(".shuffle").addEventListener("click", function() {
+  console.log("Shuffle button clicked!");
+  if(game.started){
+    alert("Cannot shuffle mid game");
+    return;
+  }
+  game.deck.reset();
+  updateCardsLenght();
+});
+
   //ASSIGN SLOT
 document.querySelector(".slots-container").addEventListener("click", function(event) {
   if(event.target && event.target.classList.contains("slot-btn")){
