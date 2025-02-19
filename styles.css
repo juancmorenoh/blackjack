@@ -456,25 +456,36 @@ input[type="radio"]:checked + label {
 }
 
 /* BALANCE */
-.balance{
-  border: 3px solid rgb(175, 173, 66);
-  margin: 3px;
+.balance {
+  border: 3px solid rgb(255, 215, 0);
+  background: rgba(0, 0, 0, 0.7); 
+  margin: auto;
   width: 50%;
-  margin: 3px auto;
-  flex: 1;
   text-align: center;
   font-weight: bold;
-  
-  border-radius: 10px;
+  border-radius: 12px;
+  height: 100px;
+  box-shadow: 0 4px 8px rgba(255, 215, 0, 0.4);
+  transition: 0.3s ease-in-out;
 }
-.balance p{
-  padding: 2px 0px;
+
+.balance p {
+  padding: 10px 0;
+  font-size: 14px;
+  margin: 0;
 }
-.balance p:first-child{
-  background-color: rgb(175, 173, 66);
+
+.balance p:first-child {
+  background: linear-gradient(to right, #b8860b, #ffcc00);
+  color: black;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
-.balance p:nth-child(2){
-  color: white;
+
+.balance p:nth-child(2) {
+  color: #fff;
+  font-size: 16px;
 }
 
 /* ACTIONS */
