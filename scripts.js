@@ -389,9 +389,8 @@ class Game{
       //manages all the logic for placing the insurance bet and related HTML
       //updates the player balance
       createInsuranceButton(this.playingSlotsIndexes);
-      
-      setTimeout(handleInsurance,10000);
-      
+  
+      startInsuranceTimer(10);
     }else if(this.dealer.hand.isBlackJack()){
       
       displayMessage("Dealer has BJ","warning");
@@ -1097,4 +1096,28 @@ function highlightCurrentSlot(currentSlotIndex) {
     if (activeSlot) activeSlot.classList.add("active-slot"); 
 }
 
+//Function to display time bar and run insurance logic when time ends
+function startInsuranceTimer(duration) {
+  const timerContainer = document.querySelector(".timer-container");
+  const timerBar = document.querySelector(".timer-bar");
 
+  let timeRemaining = duration;
+  let interval;
+  timerContainer.style.display = "block";
+
+  timerBar.style.width = "100%";
+
+  interval = setInterval(() => {
+    const percentage = (timeRemaining / duration) * 100;
+    timerBar.style.width = `${percentage}%`;
+
+    // when time is up run handleInsurance logic
+    if (timeRemaining <= 0) {
+      clearInterval(interval);
+      timerContainer.style.display = "none";
+      handleInsurance(); 
+    }
+
+    timeRemaining--;
+  }, 1000); 
+}

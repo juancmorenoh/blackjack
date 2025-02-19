@@ -548,3 +548,22 @@ input[type="radio"]:checked + label {
   box-shadow: none;
 }
 
+
+.timer-container {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 20px;
+  background-color: white;
+  border-radius: 10px;
+  overflow: hidden;
+  display: none; 
+}
+.timer-bar {
+  height: 100%;
+  background-color: #ffcc00;
+  border-radius: 10px;
+  transition: width 1s linear;
+}
