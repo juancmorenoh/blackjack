@@ -54,35 +54,49 @@ form{
   color: white;
 }
 
-form input{
-  border-radius: 5px;
+form input {
+  border-radius: 8px;
   border: none;
-}
-
-.form-entry{
+  padding: 10px;
+  font-size: 16px;
   width: 100%;
-  margin: 5px;
-
-  display: flex;
-  justify-content: space-between;
+  transition: 0.3s ease-in-out;
 }
-
-.start-game-btn{
-  color: antiquewhite;
-  padding: 30px;
-  background-color: #ff0000;
-  border-radius: 20px;
-  width: 200px;
-  align-self: center;
-  margin-top: 30px;
+form input:focus {
+  outline: none;
+  box-shadow: 0 0 5px #ff0000;
+}
+.form-entry {
+  width: 100%;
+  margin: 10px 0;
+  display: flex;
+  flex-direction: column;
+}
+.form-entry label {
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+.start-game-btn {
+  color: white;
+  font-weight: bold;
+  padding: 15px;
+  background: linear-gradient(to right, #ff4b2b, #ff416c);
+  border: none;
+  border-radius: 25px;
+  width: 100%;
+  cursor: pointer;
+  font-size: 18px;
+  text-transform: uppercase;
+  transition: 0.3s ease-in-out;
 }
 
 .start-game-btn:hover {
-  background: #218838;
+  background: linear-gradient(to right, #218838, #28a745);
+  transform: scale(1.05);
 }
 
 /* Top left corner */
-.top-left-corner, 
+.top-right-corner, 
 .message-container{
   background: rgba(0, 0, 0, 0.5);
   position: absolute;
@@ -92,17 +106,17 @@ form input{
   width: 280px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
-.top-left-corner{
+.top-right-corner{
   top: 10px;
-  left: 10px;
+  right: 10px;
 }
-.top-left-corner p{
+.top-right-corner p{
   font-size: 14px;
   margin: 5px 0;
   line-height: 1.5; 
 }
 
-.top-left-corner .player-name,
+.top-right-corner .player-name,
 .message-container .message-title  {
   font-weight: bold;
   font-size: 16px;
@@ -128,7 +142,7 @@ form input{
 }
 
 .message-container {
-  top: 180px;
+  top: 10px;
   left: 10px;
   overflow: hidden;
 }

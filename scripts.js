@@ -482,7 +482,7 @@ class Game{
           displayMessage(`Slot ${index} loses. ${handText}`,"lose");
           
         } else {
-          displayMessage(`Slot ${index} tie. Bet returned. ${handText}`);
+          displayMessage(`Slot ${index} tie. Bet returned. ${handText}`,"warning");
           this.player.balance += parseInt(handBet) ;
         }
       })
@@ -564,7 +564,7 @@ document.getElementById("start-form").addEventListener("submit", function(event)
   game = new Game(player, 3, numberDecks);
 
   createSlots(numberSlots);
-  topLeftCorner();
+  topRightCorner();
 
   updateDisplayBalance();
   toggleActionBtn(true);
@@ -616,25 +616,30 @@ function displayMessage(message, type = "default") {
 
   setTimeout(() => {
     messageElement.remove();
-  }, 50000);
+  }, 30000);
+
+  const messages = messageContainer.querySelectorAll(".message");
+  if (messages.length > 10) {
+    messages[0].remove();
+  }
 }
 
 //function to create the top left container
-function topLeftCorner(){
+function topRightCorner(){
   const tableDiv = document.querySelector(".table");
-  const topLeftCorner = document.createElement("div");
-  topLeftCorner.classList.add("top-left-corner");
-  topLeftCorner.innerHTML = `<p class="player-name">Welcome ${game.player.name}</p>
+  const topRightCorner = document.createElement("div");
+  topRightCorner.classList.add("top-right-corner");
+  topRightCorner.innerHTML = `<p class="player-name">Welcome ${game.player.name}</p>
   <p>Number of decks: ${game.numDecks}</p>
   <p class="cards-left">Cards in the shoe: ${game.deck.cardsLeft}</p>
   <button class="reset-game">Reset game</button>`;
 
-  tableDiv.prepend(topLeftCorner);
+  tableDiv.prepend(topRightCorner);
 
   const resetButton = document.querySelector(".reset-game");
   resetButton.addEventListener("click", function() {
     displayMessage("Resetting the game...");
-    topLeftCorner.remove();
+    topRightCorner.remove();
     resetActionButtons();
     document.querySelector(".dealer").innerHTML = "";
     const overlay = document.querySelector(".overlay");
