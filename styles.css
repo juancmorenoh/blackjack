@@ -81,26 +81,32 @@ form input{
   background: #218838;
 }
 
-.top-right-corner{
+/* Top left corner */
+.top-left-corner, 
+.message-container{
   background: rgba(0, 0, 0, 0.5);
   position: absolute;
-  top: 10px;
-  left: 10px;
   color: white;
   padding: 15px;
   border-radius: 10px;
-  width: 250px;
+  width: 280px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
-.top-right-corner p {
+.top-left-corner{
+  top: 10px;
+  left: 10px;
+}
+.top-left-corner p{
   font-size: 14px;
   margin: 5px 0;
   line-height: 1.5; 
 }
-.top-right-corner .player-name {
+
+.top-left-corner .player-name,
+.message-container .message-title  {
   font-weight: bold;
   font-size: 16px;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 .reset-game {
   background-color: rgb(128, 126, 41);  
@@ -120,6 +126,44 @@ form input{
 .reset-game:active {
   transform: scale(0.98);  
 }
+
+.message-container {
+  top: 180px;
+  left: 10px;
+  overflow: hidden;
+}
+
+.message-container .message-title {
+  text-align: center;
+}
+.message{
+  font-size: 12px;
+  margin: 5px 0;
+  padding: 4px 5px;
+  line-height: 1.1; 
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+.win {
+  background: linear-gradient(135deg, #28a745, #218838);
+  color: white;
+  border-left: 4px solid #1e7e34;
+}
+
+.lose {
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  color: white;
+  border-left: 4px solid #bd2130;
+}
+
+.warning {
+  background: linear-gradient(135deg, #ffc107, #dfa700);
+  color: #313030;
+  border-left: 4px solid #d39e00;
+}
+
 /* Shuffle */
 .shuffle{
   background-image: url('images/shuffle.png');

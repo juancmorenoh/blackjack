@@ -178,7 +178,6 @@ class Slot{
 
   split(deck){
     if(!this.hands[0].canSplit() || this.player.balance < this.bet) return false;
-    console.log("inside split function, hand can split")
     const firstHand = this.hands[0]
     const secondHand = new Hand();
 
@@ -270,14 +269,12 @@ class Game{
 
   joinSlot(slotIndex) {
     if (this.allSlots[slotIndex] == null) {
-      console.log("Creating slot")
       // Add slot if null
       this.allSlots[slotIndex] = new Slot(this.player);
       return true;
     } else {
       // Remove slot if it already exists
       //reset bet to 0 before deleting slot
-      console.log("Removing slot")
       //this.selectedSlots[slotIndex].bet = 0;
       this.allSlots[slotIndex] = null;
       return false;
@@ -307,11 +304,9 @@ class Game{
       this.allSlots.forEach((slot,index) =>{
         if(slot != null){
           slot.hit(this.deck);
-          console.log(`Dealt to Slot ${index}: ${slot.hands[0]}`);
         }
       })
       this.dealer.hand.addCard(this.deck.dealCard()); 
-      console.log(`Dealt to Dealer: ${this.dealer.hand}`); 
     }
   }
 
@@ -385,7 +380,7 @@ class Game{
 
     //check dealer Ace
     if(this.dealer.showAce()){
-      console.log("Dealer show ace, insurance open for 10seconds");
+      displayMessage("Dealer show ace, insurance open for 10seconds","warning");
       //Disable hit-stand and possible double-split btn
       document.querySelectorAll(".actions button").forEach(button =>{
         button.disabled = true;
@@ -399,7 +394,7 @@ class Game{
       
     }else if(this.dealer.hand.isBlackJack()){
       
-      console.log("Dealer has BJ");
+      displayMessage("Dealer has BJ","warning");
       this.endRound();
     }else{
       //Check for players with BJ to pay immidiatly
@@ -414,9 +409,7 @@ class Game{
     //the current slot is the first active slot of playingIndexes
     if (game.allSlots.some(slot => slot != null && slot.status == "active")) {
       this.playingSlotsIndexes = this.getPlayingSlotIndexes();
-      this.currentSlotIndex = this.playingSlotsIndexes[0];
-      console.log(game.allSlots);
-      
+      this.currentSlotIndex = this.playingSlotsIndexes[0];      
       setUpCurrentSlot(this.currentSlotIndex);
     }
     
@@ -458,13 +451,14 @@ class Game{
 
     //Update cards left in the shoe
     updateCardsLenght();
-    console.log("END OF THE GAME");
   }
 
 
   payoutSlots(){
     this.allSlots.forEach((slot, index) => {
       if (slot == null || slot.status == "inactive") return;
+
+      const multipleHands = slot.hands.length > 1;
 
       slot.hands.forEach((hand,handIndex) => {
         const dealerScore = this.dealer.hand.score;
@@ -473,20 +467,22 @@ class Game{
         let handBet = handIndex === 0 ? slot.bet : slot.splitBet;
         handBet = slot.doubleBet ? handBet*2 : handBet;
 
+        const handText = multipleHands ? `<i>Hand ${handIndex}</i>` : "";
+
         if (playerScore > 21) {
-          console.log(`Slot ${index} busted and lost the bet.`);
+          displayMessage(`Slot ${index} busted, lost bet`,"lose");
           
         } else if (dealerScore > 21) {
-          console.log(`Dealer busted! Slot ${index} wins.  Hand :${handIndex}`);
+          displayMessage(`Dealer busted! Slot ${index} wins. ${handText}`,"win");
           this.player.balance += parseInt(handBet) * 2; 
         } else if (playerScore > dealerScore) {
-          console.log(`Slot ${index} wins! Hand :${handIndex}`);
+          displayMessage(`Slot ${index} wins! ${handText}`,"win");
           this.player.balance += parseInt(handBet)  * 2; 
         } else if (playerScore < dealerScore) {
-          console.log(`Slot ${index} loses.  Hand :${handIndex}` );
+          displayMessage(`Slot ${index} loses. ${handText}`,"lose");
           
         } else {
-          console.log(`Slot ${index} pushes (tie). Bet returned.  Hand :${handIndex}`);
+          displayMessage(`Slot ${index} tie. Bet returned. ${handText}`);
           this.player.balance += parseInt(handBet) ;
         }
       })
@@ -496,10 +492,10 @@ class Game{
 }
 
 function payInsurance(){
-  game.allSlots.forEach(slot => {
+  game.allSlots.forEach((slot,index) => {
     if(slot && slot.insurance){
       slot.player.balance += parseInt(slot.insurance) * 3;
-      console.log("paid insurance");
+      displayMessage(`Insurance paid to slot ${index}`, "win");
       slot.insurance = null;
     }
   })
@@ -538,7 +534,7 @@ function handleInsurance(){
         slot.insurance = null;
       }
     });
-    console.log("Dealer does not have BJ, insurance bets lost")
+    displayMessage("Dealer does not have BJ, insurance bets lost")
     //Pay slots with BJ and set them to inactive
     handlePlayersBj();
     //If no more active slots
@@ -611,11 +607,23 @@ function toggleActionBtn(boolean){
   document.getElementById("deal-button").disabled = !boolean;
 }
 
+function displayMessage(message, type = "default") {
+  const messageContainer = document.querySelector(".message-container");
+  const messageElement = document.createElement("p");
+  messageElement.classList.add("message",type);
+  messageElement.innerHTML = message;
+  messageContainer.appendChild(messageElement);
+
+  setTimeout(() => {
+    messageElement.remove();
+  }, 50000);
+}
+
 //function to create the top left container
 function topLeftCorner(){
   const tableDiv = document.querySelector(".table");
   const topLeftCorner = document.createElement("div");
-  topLeftCorner.classList.add("top-right-corner");
+  topLeftCorner.classList.add("top-left-corner");
   topLeftCorner.innerHTML = `<p class="player-name">Welcome ${game.player.name}</p>
   <p>Number of decks: ${game.numDecks}</p>
   <p class="cards-left">Cards in the shoe: ${game.deck.cardsLeft}</p>
@@ -625,7 +633,7 @@ function topLeftCorner(){
 
   const resetButton = document.querySelector(".reset-game");
   resetButton.addEventListener("click", function() {
-    console.log("Resetting the game...");
+    displayMessage("Resetting the game...");
     topLeftCorner.remove();
     resetActionButtons();
     document.querySelector(".dealer").innerHTML = "";
@@ -648,7 +656,7 @@ function updateCardsLenght(){
 
 //SHUFFLE CLICK
 document.querySelector(".shuffle").addEventListener("click", function() {
-  console.log("Shuffle button clicked!");
+  displayMessage("Cards have been shuffled!");
   if(game.started){
     alert("Cannot shuffle mid game");
     return;
@@ -669,7 +677,7 @@ document.querySelector(".slots-container").addEventListener("click", function(ev
     const radioDiv = slotDiv.querySelector('.radio-container');
 
     if(game.joinSlot(slotIndex)) {
-        console.log(`slot ${slotIndex} created`);
+        displayMessage(`Added slot ${slotIndex}`);
         event.target.textContent = `-`;;
         event.target.classList.add("remove");
 
@@ -690,7 +698,7 @@ document.querySelector(".slots-container").addEventListener("click", function(ev
     }else{
       
       event.target.classList.remove("remove");
-      console.log(`slot ${slotIndex} removed`);
+      displayMessage(`Removed slot ${slotIndex}`);
       //remove radio input
       const radio = document.querySelector(`input[id="slot-${slotIndex}"]`);
       if(radio) radio.remove();
@@ -740,7 +748,6 @@ document.querySelectorAll(".bet-button").forEach((betBtn) => {
 
 //DEAL-BUTTON
 document.getElementById("deal-button").addEventListener("click", function() {
-  console.log(game.allSlots)
   if(game.started){
     alert("End the game before starting a new one!");
     return;
@@ -758,7 +765,7 @@ document.querySelector(".actions").addEventListener("click", function(event) {
     handlesHit(game.currentSlotIndex);
   }
   if(event.target.id == "stand-button") {
-    console.log(`Hand ${currentSlot.activeHandIndex} in slot ${game.currentSlotIndex} STAND`)
+    displayMessage(`Slot ${game.currentSlotIndex}, Hand ${currentSlot.activeHandIndex} STAND`)
     nextSlot();
   }
   //If double, nextTurn and handles the bet and updating the HTML
@@ -771,11 +778,9 @@ document.querySelector(".actions").addEventListener("click", function(event) {
       currentSlot.player.balance -= currentSlot.bet;
       //currentSlot.bet *= 2;
       currentSlot.doubleBet = currentSlot.bet;//
-      console.log(`Player balance: ${currentSlot.player.balance}`)
-      console.log(`Starting bet : ${currentSlot.bet}, double bet : ${currentSlot.doubleBet}`)
+      displayMessage(`Slot ${game.currentSlotIndex} DOUBLE, one card only!`)
       updateBetDisplay(game.currentSlotIndex, currentSlot.bet);
       updateDisplayBalance();
-      console.log("One card only");
       currentSlot.hit(game.deck);
       updateHandDisplay(game.currentSlotIndex);
       nextSlot();
@@ -789,7 +794,6 @@ document.querySelector(".actions").addEventListener("click", function(event) {
 //Add buttons, hightlite etc...
 //takes the index of the slot as parameter and
 function setUpCurrentSlot(index){
-  console.log(`Next turn: Player in Slot ${index}`);
   const currentSlot = game.allSlots[index];
   highlightCurrentSlot(index);
 
@@ -814,10 +818,10 @@ function handlesHit(currentSlotIndex){
   currentSlot.hit(game.deck,currentHandIndex);
   updateHandDisplay(currentSlotIndex);
   if (currentHand.score > 21) {  
-    console.log(`Hand ${currentSlot.activeHandIndex} in Slot ${currentSlotIndex} BUSTED!`);    
+    displayMessage(`Slot ${currentSlotIndex},Hand ${currentSlot.activeHandIndex},BUSTED`);    
     nextSlot();
   } else if (currentHand.score === 21) {  
-    console.log(`Hand ${currentSlot.activeHandIndex} in Slot ${currentSlotIndex} AUTOMATICALLY STANDS`);      
+    displayMessage(`Slot ${game.currentSlotIndex}, Hand ${currentSlot.activeHandIndex} STANDS`);      
     nextSlot();
   }
 }
@@ -934,7 +938,6 @@ function nextSlot(){
   if(currentSlot.hands.length > 1){
     currentSlot.activeHandIndex++;
     if(currentSlot.activeHandIndex < currentSlot.hands.length){
-      console.log(`Move to next hand in slot: ${game.currentSlotIndex}`);
       updateHandDisplay(game.currentSlotIndex);
       return;
     }
@@ -954,8 +957,6 @@ function nextSlot(){
 
   //remove first element of the array of playing indexes
   const removedIndex = game.playingSlotsIndexes.shift();
-  console.log(`NextSlot() was just called and it just removed slot at index ${removedIndex}`);
-  console.log(`Remaining slots : ${game.playingSlotsIndexes.length}`)
   //if there are slots left to play
   if(game.playingSlotsIndexes.length > 0) {
     //move to next playing index
@@ -964,11 +965,13 @@ function nextSlot(){
   }else{
     const activePlayersExist = game.allSlots.some(slot => slot && slot.status === "active" && slot.hands[0].score <= 21);
     if(activePlayersExist){//some players are still active and didn't bust
-      console.log("All players have finished. Dealer's turn!");
+      displayMessage("Dealer's turn!");
       game.dealer.play(game.deck);
       game.dealer.displayHand(true);
     }else{//all playing indexes busted
-      console.log("No active players, dealer does not draw cards!");
+      if(game.dealer.hand.score < 17){
+        displayMessage("No active players, dealer does not draw cards!","warning");
+      }
     }
     game.endRound();
   }
@@ -1000,7 +1003,7 @@ function handlePlayersBj(){
   if (indexesWithBj.length > 0) {
     indexesWithBj.forEach(index => {
       let slot = game.allSlots[index];
-      console.log(`Slot ${index} wins with Blackjack! Paying 1.5x the bet.`);
+      displayMessage(`Slot ${index} wins BLACKJACK!`,"win");
       slot.player.addBalance(slot.bet * 1.5); // 1.5x payout
       game.allSlots[index].status = "inactive"; // Remove slot from play
     });
@@ -1031,7 +1034,7 @@ function createSplitButton(currentSlotIndex){
     const currentSlot = game.allSlots[currentSlotIndex];
   
     if(currentSlot.split(game.deck)){
-      console.log(`Slot ${currentSlotIndex} split into two hands!`);
+      displayMessage(`Slot ${currentSlotIndex} SPLIT`,"warning");
       //split() modifies balance and bet
       //update balance html
       updateDisplayBalance()
@@ -1060,7 +1063,6 @@ function createInsuranceButton(arrayOfIndexes){
     parentDiv.appendChild(insuranceButton);
 
     insuranceButton.addEventListener('click', () => {
-      console.log(`Insurance clicked for Slot ${index}`);
       //If player balance is at least half the bet
       const insuranceAmount = currentSlot.bet / 2;
       const playerBalance = currentSlot.player.balance
@@ -1068,7 +1070,7 @@ function createInsuranceButton(arrayOfIndexes){
         //update the balance
         //create text for insured slots
         //remove insurance btn
-        console.log("Insurance activated");
+        displayMessage(`Slot ${index}, insured`,"warning");
         currentSlot.player.balance -= insuranceAmount;
         updateDisplayBalance();
         currentSlot.insurance = insuranceAmount;
