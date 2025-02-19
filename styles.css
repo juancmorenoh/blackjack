@@ -359,33 +359,35 @@ form input:focus {
 
 /* Add-remove slot */
 .slot-btn {
-  background-color: #28a745;
-  opacity: 0.7;
-  color: white; 
-  font-size: 16px;
+  background: linear-gradient(135deg, #28a745, #1c7c31); 
+  opacity: 0.9; 
+  color: white;
+  font-size: 20px;
   font-weight: bold;
-  border-radius: 8px;
-  width: 40px;
-  height: 60px;
-  align-self: center;
-  
+  border-radius: 10px;
+  width: 50px;
+  height: 70px;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); 
 }
 
 .slot-btn:hover {
-  background-color: #88998c;
+  transform: scale(1.05); /* Slightly enlarges on hover */
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.4);
 }
+
 .radio-container{
   position: relative;
-  max-width: 100px;
+  max-width: 120px;
   align-self: center;
 }
 .remove {
-  background-color: #ff0000; 
-  width: 18px;
-  height: 18px;
+  background: linear-gradient(135deg, #8a1717, #e60b0b); 
+  width: 22px;
+  height: 22px;
   position: absolute;
-  bottom: -5px;
-  right: -10px;
+  bottom: -8px;
+  right: -12px;
   opacity: 1;
 }
 
@@ -397,19 +399,21 @@ input[type="radio"] {
 
 input[type="radio"] + label {
   display: inline-block;
-  padding: 3px 10px;
-  border-radius: 5px;
+  padding: 6px 14px;
+  border-radius: 6px;
   cursor: pointer;
-  background-color: white;
-  color: #4CAF50;
+  background-color: #185312;
+  color: #f8f9fa;
   font-weight: bold;
-  transition: 0.3s;
+  transition: all 0.3s;
   margin-top: 5px;
+  border: 2px solid #4CAF50;
   
 }
 input[type="radio"]:checked + label {
-  background-color: #4CAF50;
+  background-color: #0b310d;
   color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* insurance */
@@ -420,6 +424,10 @@ input[type="radio"]:checked + label {
   padding: 3px 5px;
   border-radius: 10px;
   font-size: 12px;
+}
+.insurance-btn:hover{
+  background: linear-gradient(135deg, #a08b32, #8c7928);
+  transform: scale(1.05);
 }
 
 /* LOW */

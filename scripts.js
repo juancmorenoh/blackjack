@@ -782,7 +782,7 @@ document.querySelector(".actions").addEventListener("click", function(event) {
       currentSlot.player.balance -= currentSlot.bet;
       //currentSlot.bet *= 2;
       currentSlot.doubleBet = currentSlot.bet;//
-      displayMessage(`Slot ${game.currentSlotIndex} DOUBLE, one card only!`)
+      displayMessage(`Slot ${game.currentSlotIndex} DOUBLE, one card only!`,"warning")
       updateBetDisplay(game.currentSlotIndex, currentSlot.bet);
       updateDisplayBalance();
       currentSlot.hit(game.deck);
