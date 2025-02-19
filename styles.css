@@ -372,7 +372,7 @@ form input:focus {
 }
 
 .slot-btn:hover {
-  transform: scale(1.05); /* Slightly enlarges on hover */
+  transform: scale(1.05);
   box-shadow: 0 6px 10px rgba(0, 0, 0, 0.4);
 }
 

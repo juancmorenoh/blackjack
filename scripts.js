@@ -380,6 +380,19 @@ class Game{
 
     //check dealer Ace
     if(this.dealer.showAce()){
+
+      //If all playing slots have BJ no need for insurance, end game
+      const allPlayersHaveBJ = this.allSlots.every(slot => {
+        return slot == null || slot.status === "inactive" || slot.hands[0].isBlackJack();
+      });
+  
+      if (allPlayersHaveBJ) {
+        // 
+        displayMessage("Dealer shows an Ace, but all players have Blackjack.", "warning");
+        this.endRound();
+        return;
+      }
+
       displayMessage("Dealer show ace, insurance open for 10seconds","warning");
       //Disable hit-stand and possible double-split btn
       document.querySelectorAll(".actions button").forEach(button =>{
@@ -405,15 +418,19 @@ class Game{
       }
     }
 
-    //the current slot is the first active slot of playingIndexes
-    if (game.allSlots.some(slot => slot != null && slot.status == "active")) {
-      this.playingSlotsIndexes = this.getPlayingSlotIndexes();
-      this.currentSlotIndex = this.playingSlotsIndexes[0];      
-      setUpCurrentSlot(this.currentSlotIndex);
-    }
+    //If the dealer showAce and therfore timer for insurance activates
+    //Wait 10s for the below code to run, else no delay
+    const delayTime = this.dealer.showAce() ? 10000 : 0;
+    setTimeout(() => {
+      //the current slot slot to first active slot
+      if (game.allSlots.some(slot => slot != null && slot.status == "active")) {
+        this.playingSlotsIndexes = this.getPlayingSlotIndexes();
+        this.currentSlotIndex = this.playingSlotsIndexes[0];      
+        setUpCurrentSlot(this.currentSlotIndex);
+      }
     
-    
-    
+    }, delayTime);
+
   } 
 
   endRound(){
