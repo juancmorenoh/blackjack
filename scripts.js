@@ -38,7 +38,7 @@ class Deck {
 
   createDeck(){
     const suits = ["Hearts", "Diamonds", "Clubs", "Spades"];
-    const values = [ "2", "3", "4", "5", "6", "7", "8", "9", "10","J", "Q", "K", "A"];
+    const values = [ "A", "A", "A", "5", "6", "7", "8", "9", "10","J", "Q", "K", "A"];
 
     for (let i = 0; i < this.numberOfDekcs; i++) {
       suits.forEach( suit => {
@@ -104,11 +104,12 @@ class Hand {
     return this.calculateScore();
   }
   canDouble(){
+    return this.score > 3
     return this.score > 8 && this.score < 12 && this.cards.length == 2;  
   }
 
   canSplit(){
-    return this.cards[0].value == this.cards[1].value && this.cards.length == 2;
+    return this.cards[0].value != this.cards[1].value && this.cards.length == 2;
   }
 
   isBlackJack(){
@@ -392,6 +393,7 @@ class Game{
         this.endRound();
         return;
       }
+      
 
       displayMessage("Dealer show ace, insurance open for 10seconds","warning");
       //Disable hit-stand and possible double-split btn
@@ -1119,22 +1121,22 @@ function startInsuranceTimer(duration) {
   const timerBar = document.querySelector(".timer-bar");
 
   let timeRemaining = duration;
-  let interval;
   timerContainer.style.display = "block";
 
   timerBar.style.width = "100%";
 
-  interval = setInterval(() => {
+  function updateBar() {
     const percentage = (timeRemaining / duration) * 100;
     timerBar.style.width = `${percentage}%`;
 
-    // when time is up run handleInsurance logic
-    if (timeRemaining <= 0) {
+    if (timeRemaining < 0) {
       clearInterval(interval);
       timerContainer.style.display = "none";
       handleInsurance(); 
     }
 
     timeRemaining--;
-  }, 1000); 
+  }
+  updateBar();
+  let interval = setInterval(updateBar,1000);
 }

@@ -96,6 +96,25 @@ form input:focus {
 }
 
 /* Top left corner */
+.open-msg-container{
+  background-color: rgb(128, 126, 41, 0.8);  
+  border-radius: 5px;
+  position: absolute;
+  color: white;
+  top: 10px;
+  left: 10px;
+  display: none;
+  font-size: 18px;
+  padding: 10px 15px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.open-msg-container:hover {
+  background-color: rgb(179, 176, 21); 
+  transform: scale(0.90);  
+}
+
 .top-right-corner, 
 .message-container{
   background: rgba(0, 0, 0, 0.5);
@@ -136,9 +155,6 @@ form input:focus {
 }
 .reset-game:hover {
   background-color: rgb(179, 176, 21); 
-}
-.reset-game:active {
-  transform: scale(0.98);  
 }
 
 .message-container {
@@ -439,7 +455,6 @@ input[type="radio"]:checked + label {
 
 .bet-balance-container{
   margin: 5px;
-
   width: 300px;
   
   display: flex;
@@ -500,6 +515,7 @@ input[type="radio"]:checked + label {
 .actions{
   flex: 1; 
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
   
@@ -574,4 +590,93 @@ input[type="radio"]:checked + label {
   background-color: #ffcc00;
   border-radius: 10px;
   transition: width 1s linear;
+}
+
+@media (max-width: 1010px){
+  .actions{
+    text-align: center;
+  }
+  .actions button{
+    flex: 1;
+    max-width: 100px;
+  }
+}
+
+@media (max-width: 800px) {
+  .dealer{
+    flex: 0.35;
+    margin-bottom: 50px;
+  }
+  
+  .slots-container{
+    flex-wrap: wrap;
+    flex: 1;
+  }
+  .actions button {
+    width: 65px;
+    height: 65px;
+    font-size: 12px;
+    margin: 4px;
+    flex: none;
+    overflow: hidden;
+  }
+  .bet-balance-container{
+    width: 250px;
+    margin: 2px;
+  }
+  .bet-container{
+    flex: 1;
+  }
+  .bet-button{
+    margin-top: 40px;
+    width: 40px;
+    height: 40px;
+  }
+  
+  .balance{
+    width: 70%;
+    font-size: 10px;
+    padding: 3px;
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    gap: 3px;
+    align-items: center;
+    justify-content: center;
+  }
+  .balance p{
+    padding: 3px;
+    margin: 2px;
+    border-radius: 5px 0 0 5px;
+  }
+  .top-right-corner{
+    width: 140px;
+    padding: 10px;
+    
+  }
+  .top-right-corner p{
+    font-size: 12px;
+  }
+  .top-right-corner .player-name{
+    font-size: 14px;
+  }
+  .reset-game{
+    padding: 8px 0;
+    display: block;
+    margin: 5px auto;
+  }
+  .shuffle{
+    top: 170px;
+    right: 10px;
+    height: 30px;
+    width: 30px;
+  }
+
+  .message-container{
+    display: none;
+  }
+
+  .open-msg-container{
+    display: block;
+  }
 }
