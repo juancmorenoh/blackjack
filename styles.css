@@ -114,6 +114,22 @@ form input:focus {
   background-color: rgb(179, 176, 21); 
   transform: scale(0.90);  
 }
+.open-msg-container[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  top: 50px; 
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px;
+  border-radius: 5px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.message-container.show {
+  display: block;
+  top: 70px;
+}
 
 .top-right-corner, 
 .message-container{

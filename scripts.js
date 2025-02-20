@@ -38,7 +38,7 @@ class Deck {
 
   createDeck(){
     const suits = ["Hearts", "Diamonds", "Clubs", "Spades"];
-    const values = [ "A", "A", "A", "5", "6", "7", "8", "9", "10","J", "Q", "K", "A"];
+    const values = [ "2", "3", "4", "5", "6", "7", "8", "9", "10","J", "Q", "K", "A"];
 
     for (let i = 0; i < this.numberOfDekcs; i++) {
       suits.forEach( suit => {
@@ -104,12 +104,11 @@ class Hand {
     return this.calculateScore();
   }
   canDouble(){
-    return this.score > 3
     return this.score > 8 && this.score < 12 && this.cards.length == 2;  
   }
 
   canSplit(){
-    return this.cards[0].value != this.cards[1].value && this.cards.length == 2;
+    return this.cards[0].value == this.cards[1].value && this.cards.length == 2;
   }
 
   isBlackJack(){
@@ -688,6 +687,18 @@ document.querySelector(".shuffle").addEventListener("click", function() {
   updateCardsLenght();
 });
 
+//ADD CLASS SHOW TO ACTIONS-MESSAGE WHEN ACTIONS IS CLICKED
+document.querySelector(".open-msg-container").addEventListener("click", function(){
+  document.querySelector(".message-container").classList.toggle("show");
+});
+
+//REMOVE SHOW CLASS IF SCRREN SIZE >800
+window.addEventListener("resize", function() {
+  const msgContainer = document.querySelector(".message-container");
+  if (window.innerWidth > 800) {
+      msgContainer.classList.remove("show");
+  }
+});
   //ASSIGN SLOT
 document.querySelector(".slots-container").addEventListener("click", function(event) {
   if(event.target && event.target.classList.contains("slot-btn")){
