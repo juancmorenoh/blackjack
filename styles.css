@@ -1,3 +1,4 @@
+
 *{
   padding: 0;
   margin: 0;
@@ -18,7 +19,13 @@ button{
 
 h1{
   text-align: center;
-  padding-top: 0.7rem;
+  padding: 0.7rem;
+  font-size: 3rem;
+  font-weight: 700;
+  color: #ffd700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 3px 3px 10px rgba(0, 0, 0, 0.5);
 }
 
 .overlay{
@@ -606,6 +613,19 @@ input[type="radio"]:checked + label {
   background-color: #ffcc00;
   border-radius: 10px;
   transition: width 1s linear;
+}
+
+/* FOOTER */
+.references{
+  font-size: 14px;
+  display: flex;
+  justify-content: center;
+  background-color: #173619;
+}
+.references a{
+  color: #b9f7cb;
+  text-decoration: none;
+  padding: 20px 0;
 }
 
 @media (max-width: 1010px){
